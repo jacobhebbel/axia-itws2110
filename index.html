@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Axia - Smart Finance, Simple Solutions</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css" type="text/css">
+</head>
+<body>
+    <header>
+        <img src="images/logo.png" alt="Axia Logo" class="logo">
+        <img src="images/name.png" alt="Axia - Smart Finance, Simple Solutions" class="title-img">
+      </header>
+
+    <section class="content-section">
+        <div class="content-image">
+            <img src="images/Axia_Finance_Project.jpeg" alt="Axia Finance Project">>
+        </div>
+        <div class="content-text">
+            <h2>Axia Finance Friend</h2>
+            <p>Displays relevant statistics for an investors portfolio and uses mean-variance optimization to calculate and plot the efficient frontier.</p>
+            <p>Streamlines the process of evaluating your portfolio by displaying all relevant statistics and the efficient frontier in an easy to use, visually appealing manner.</p>
+        </div>
+    </section>
+
+    <section class="content-section">
+        <div class="content-image">
+            <img src="images/Stay_Green_Project.png" alt="Stay Green Project">>
+        </div>
+        <div class="content-text">
+            <h2>Stay Green</h2>
+            <p>Shows the nearest greenspace in your community, giving back to the environment and promoting interactions with nature.</p>
+            <p>In a world where reducing your carbon footprint is essential to creating a better tomorrow, we created a resource to encourage others to embrace the beauty of nature.</p>
+        </div>
+    </section>
+
+    <section class="content-section">
+        <div class="content-image">
+            <img src="images/ICPG_Project.jpeg" alt="Color Pallet Project">>
+        </div>
+        <div class="content-text">
+            <h2>Interactive Color Pallet Generator</h2>
+            <p>Generates a color pallet based on user preferences, such as themes, colors, mood, tone, and reference hues.</p>
+            <p>User has the option to generate a color pallet randomly or using their preferences, alleviating the stress of choosing visually appealing color tones for a designers project.</p>
+        </div>
+    </section>
+
+    <section class="team-section">
+        <h2>Meet the Team</h2>
+        <div class="team-grid">
+            <div class="team-row top">
+                <a href="resumes/hebbej.html" class="team-link" style="text-decoration: none;">
+                <div class="team-member">
+                    <div class="headshot">
+                        <img src="headshots/jacob_headshot.png" alt="Jacob Hebbel Headshot">
+                    </div>
+                    <h3>Jacob Hebbel</h3>
+                </div>
+                </a>
+                <a href="resumes/steens2.html" class="team-link" style="text-decoration: none;">
+                    <div class="team-member">
+                        <div class="headshot">
+                            <img src="headshots/sam_headshot.png" alt="Samantha Steenbruggen Headshot">
+                        </div>
+                        <h3>Samantha Steenbruggen</h3>
+                    </div>
+                </a>
+                <a href="resumes/lifrim.html" class="team-link" style="text-decoration: none;">
+                <div class="team-member">
+                    <div class="headshot">
+                        <img src="headshots/matt_headshot.jpg" alt="Matthew Lifrieri Headshot">
+                    </div>
+                    <h3>Matthew Lifrieri</h3>
+                </div>
+                </a>
+            </div>
+            <div class="team-row bottom">
+                <a href="resumes/thomar9.html" class="team-link" style="text-decoration: none;">
+                <div class="team-member">
+                    <div class="headshot">
+                        <img src="headshots/ryan_headshot.jpeg" alt="Ryan Thomas Headshot">
+                    </div>
+                    <h3>Ryan Thomas</h3>
+                </div>
+                </a>
+                <a href="resumes/collej2.html" class="team-link" style="text-decoration: none;">
+                <div class="team-member">
+                    <div class="headshot">
+                        <img src="headshots/jake_headshot.jpg" alt="Jake Collen Headshot">
+                    </div>
+                    <h3>Jake Collen</h3>
+                </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('.sticky-header');
+            if (window.scrollY > 50) {
+                header.style.boxShadow = '0 4px 15px rgba(255, 215, 0, 0.15)';
+                header.style.padding = '12px 40px';
+            } else {
+                header.style.boxShadow = '0 2px 10px rgba(255, 215, 0, 0.1)';
+                header.style.padding = '15px 40px';
+            }
+        });
+    </script>
+</body>
+</html>
