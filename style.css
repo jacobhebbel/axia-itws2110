@@ -601,3 +601,12 @@ resume-header {
         font-size: 1.8rem;
     } 
 }
+
+.language-tag {
+    background: rgba(237, 211, 154, 0.1);
+    color: #edd39a;
+    padding: 5px 22px;
+    border-radius: 20px;
+    font-size: 1.2rem;
+    border: 1px solid #333;
+}
