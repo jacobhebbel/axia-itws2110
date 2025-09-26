@@ -1,0 +1,68 @@
+.title {
+    display: flex;
+    justify-content: center;
+}
+
+.nav {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    padding-top: 0;
+}
+.nav > a {
+    padding: 8px 10px 8px 10px;
+}
+
+/*article styling rules*/
+
+/*wraps around an entire article's content*/
+.article-box {
+    display: flex;
+    border: 1px solid black;
+    flex-direction: column;
+}
+
+.article-title {
+    display: flex;
+    width: 100%;
+
+    /*determines alignment of article title and up/down buttons*/
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.article-title h2 {padding-left: 20px;}
+.article-button {
+    padding-right: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+/*section styling rules*/
+
+.section-box {
+    display: flex;
+    border: 1px solid blue;
+
+    /*determines alignment of section title and section text*/
+    flex-direction: column;
+}
+
+.section-title{padding-left: 15px}
+.section-text{}
+
+
+/*first section box in an article*/
+.article-box .section-box:first-child {}
+
+
+/*all section boxes excluding the first one*/
+.section-box ~ .section-box {}
+
+
+/*last section box in an article*/
+.article-box .section-box:last-child {}
+
+
+
