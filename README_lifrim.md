@@ -1,0 +1,4 @@
+- Added amendments 1-5 to main page
+- Created amendment files 1-5
+- Corrected Relative linking between amendments and home page
+- FOrmatted and Analyzed Amendments 1-5 on their respective pages 
