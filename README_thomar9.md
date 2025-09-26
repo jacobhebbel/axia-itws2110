@@ -1,4 +1,4 @@
-- Added amendments 1-10 to main page
-- Created amendment files 1-10
+- Added amendments 6-10 to main page
+- Created amendment files 6-10
 - Formatted Amendment files to have correct address linking between pages 
 - Analyzed Amendments 6-10 and added their intial quotes to their corresponding pages
