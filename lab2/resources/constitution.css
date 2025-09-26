@@ -1,68 +1,66 @@
-.title {
-    display: flex;
-    justify-content: center;
+body {
+    font-family: Georgia, serif;
+    background-color: #f9f9f9;
+    color: #222;
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+}
+header {
+    background-color: #1a3d7c;
+    color: white;
+    text-align: center;
+    padding: 20px;
+}
+header h1 {
+    margin: 0;
+    font-size: 2em;
+}
+section {
+    max-width: 1000px;
+    margin: auto;
+    padding: 30px 20px;
+}
+h2 {
+    color: #1a3d7c;
+    margin-bottom: 10px;
+}
+p.quoted {
+    font-style: italic;
+    background-color: #f0f0f0;
+    padding: 10px;
+    border-left: 4px solid #1a3d7c;
+}
+.analysis {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.analysis h3 {
+    margin-top: 0;
+}
+footer p {
+    margin: 0;
+    font-size: 0.9em;
 }
 
-.nav {
+.nav-buttons {
     display: flex;
-    justify-content: center;
-    gap: 5px;
-    padding-top: 0;
-}
-.nav > a {
-    padding: 8px 10px 8px 10px;
-}
-
-/*article styling rules*/
-
-/*wraps around an entire article's content*/
-.article-box {
-    display: flex;
-    border: 1px solid black;
-    flex-direction: column;
-}
-
-.article-title {
-    display: flex;
-    width: 100%;
-
-    /*determines alignment of article title and up/down buttons*/
-    flex-direction: row;
-    align-items: center;
     justify-content: space-between;
+    margin: 40px auto;
+    max-width: 600px;
 }
-
-.article-title h2 {padding-left: 20px;}
-.article-button {
-    padding-right: 20px;
-    display: flex;
-    flex-direction: column;
+.nav-buttons a {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #1a3d7c;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
 }
-
-/*section styling rules*/
-
-.section-box {
-    display: flex;
-    border: 1px solid blue;
-
-    /*determines alignment of section title and section text*/
-    flex-direction: column;
+.nav-buttons a:hover {
+    background-color: #3059b3;
 }
-
-.section-title{padding-left: 15px}
-.section-text{}
-
-
-/*first section box in an article*/
-.article-box .section-box:first-child {}
-
-
-/*all section boxes excluding the first one*/
-.section-box ~ .section-box {}
-
-
-/*last section box in an article*/
-.article-box .section-box:last-child {}
-
-
-
