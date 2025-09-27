@@ -1,0 +1,4 @@
+- Created the basic format for our articles/amendment pages
+- Added articles 4-7 to the main page
+- Created the article 4-7 pages
+- Created the bottom buttons to navigate through the entire Constiution with ease
