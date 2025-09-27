@@ -1,0 +1,260 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #000;
+    color: #fff;
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+header {
+    background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8));
+    background-size: cover;
+    background-position: center;
+    padding: 60px 20px;
+    text-align: center;
+    border-bottom: 1px solid #333;
+}
+
+header h1 {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    color: #edd39a;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+header p {
+    font-size: 1.3rem;
+    color: #ccc;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Navigation */
+.main-nav {
+    background-color: #0a0a0a;
+    padding: 15px 0;
+    border-bottom: 1px solid #222;
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.nav-link {
+    color: #fff;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid #333;
+    background: #111;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #edd39a;
+    border-color: #edd39a;
+    background: rgba(255, 215, 0, 0.1);
+}
+
+/* Main Content */
+.content-container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 0 20px;
+    flex-grow: 1;
+}
+
+.amendment-section {
+    margin-bottom: 40px;
+}
+
+.amendment-section h2 {
+    font-size: 2.2rem;
+    margin-bottom: 25px;
+    color: #edd39a;
+    text-align: center;
+}
+
+/* Quote Card */
+.quote-card {
+    background: #111;
+    border-radius: 10px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 5px 20px rgba(255, 215, 0, 0.1);
+    border: 1px solid #333;
+    text-align: center;
+    position: relative;
+}
+
+.quote-card::before {
+    font-size: 5rem;
+    color: rgba(237, 211, 154, 0.2);
+    position: absolute;
+    top: 10px;
+    left: 20px;
+    font-family: Georgia, serif;
+}
+
+.quoted {
+    font-size: 1.5rem;
+    color: #edd39a;
+    font-style: italic;
+    line-height: 1.8;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+}
+
+/* Analysis Section */
+.analysis {
+    background: rgba(237, 211, 154, 0.05);
+    border-radius: 10px;
+    padding: 30px;
+    margin-bottom: 30px;
+    border: 1px solid #333;
+}
+
+.analysis h3 {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    color: #edd39a;
+    border-bottom: 2px solid #333;
+    padding-bottom: 10px;
+}
+
+.analysis p {
+    font-size: 1.2rem;
+    color: #ccc;
+    line-height: 1.8;
+    margin-bottom: 15px;
+}
+
+/* Navigation Buttons */
+.nav-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 50px;
+    padding-top: 30px;
+    border-top: 1px solid #333;
+}
+
+.nav-buttons a {
+    display: inline-block;
+    background: rgba(237, 211, 154, 0.1);
+    color: #edd39a;
+    text-decoration: none;
+    padding: 12px 24px;
+    border-radius: 25px;
+    border: 1px solid #333;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.nav-buttons a:hover {
+    background: rgba(237, 211, 154, 0.2);
+    color: #fff;
+    border-color: #edd39a;
+    transform: translateY(-2px);
+}
+
+/* Footer */
+footer {
+    background-color: #111;
+    padding: 30px 20px;
+    text-align: center;
+    border-top: 1px solid #333;
+    margin-top: auto;
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.footer-content p {
+    color: #ccc;
+    margin-bottom: 10px;
+}
+
+.image-credit {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    header {
+        padding: 40px 20px;
+    }
+    
+    header h1 {
+        font-size: 2.5rem;
+    }
+    
+    header p {
+        font-size: 1.1rem;
+    }
+    
+    .content-container {
+        padding: 0 15px;
+        margin: 30px auto;
+    }
+    
+    .amendment-section h2 {
+        font-size: 1.8rem;
+    }
+    
+    .quote-card {
+        padding: 20px;
+    }
+    
+    .quoted {
+        font-size: 1.3rem;
+    }
+    
+    .analysis {
+        padding: 20px;
+    }
+    
+    .analysis h3 {
+        font-size: 1.5rem;
+    }
+    
+    .nav-buttons {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .nav-buttons a {
+        text-align: center;
+    }
+}
+
+@media (max-width: 576px) {
+    header h1 {
+        font-size: 2rem;
+    }
+    
+    .quoted {
+        font-size: 1.1rem;
+    }
+    
+    .analysis p {
+        font-size: 1rem;
+    }
+}
