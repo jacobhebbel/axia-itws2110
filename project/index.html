@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Axia - Stock Data Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header>
+        <img src="images/logo.png" alt="Axia Logo" class="logo">
+        <img src="images/name.png" alt="Axia - Smart Finance, Simple Solutions" class="title-img">
+    </header>
+
+    <div class="ticker-container">
+        <div class="ticker" id="live-ticker">
+            <!-- all of the ticker tape stuff is poplated by javascript-- need to find more efficient alternative here or get rid of it -->
+        </div>
+    </div>
+
+    <!-- for the data table with the P/E, volitility, yield, EPS, and price range-->
+    <div class="dashboard">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Stock Metrics Comparison</h2>
+                <div class="stock-selector">
+                    <select class="stock-select" id="stock-select">
+                        <option value="AAPL">Apple (AAPL)</option>
+                        <option value="MSFT">Microsoft (MSFT)</option>
+                        <option value="GOOGL">Alphabet (GOOGL)</option>
+                        <option value="AMZN">Amazon (AMZN)</option>
+                        <option value="TSLA">Tesla (TSLA)</option>
+                        <option value="AVGO">Broadcom (AVGO)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="loader" id="metrics-loader"></div>
+            <table class="stats-table" id="metrics-table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Current</th>
+                        <th>Market Expectation</th>
+                        <th>Market Average</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- data here is pulled from javascript below to populate with market data -->
+                </tbody>
+            </table>
+            <div class="status-indicator" id="data-status">
+                <span class="status-dot status-live"></span>
+                <span>Live Market Data</span>
+            </div>
+        </div>
+
+        <!-- everything here is for the efficient frontier graph that clark wanted us to add -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">CRSP Efficient Frontier</h2>
+                <div class="stock-selector">
+                    <select class="stock-select" id="frontier-select">
+                        <option value="large_cap">Large Cap Stocks</option>
+                        <option value="mid_cap">Mid Cap Stocks</option>
+                        <option value="small_cap">Small Cap Stocks</option>
+                    </select>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="frontier-chart"></canvas>
+            </div>
+            <div class="frontier-legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #edd39a;"></div>
+                    <span>Efficient Frontier</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #4caf50;"></div>
+                    <span>Optimal Portfolio</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #f44336;"></div>
+                    <span>Individual Assets</span>
+                </div>
+                <div class="legend-item">
+                    <div class="line-legend" style="background-color: #9C27B0;"></div>
+                    <span>Capital Market Line</span>
+                </div>
+                <div class="legend-item">
+                    <div class="line-legend" style="background-color: #2196F3;"></div>
+                    <span>Equal Weight Portfolio</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        //API stuff here, i highly recommend finding something thats not alpha vantage due to their limit on number of calls her day (its bad, shouldnt use for both data table and ticker tape)
+        const ALPHA_VANTAGE_BASE_URL = 'https://www.alphavantage.co/query';
+        const ALPHA_VANTAGE_API_KEY = 'DHGUBI4YDAV44GOY'; 
+        const YAHOO_FINANCE_BASE_URL = 'https://query1.finance.yahoo.com/v8/finance/chart';
+        
+        //defining the market hours as weekdays from 9:30 to 4 PM 
+        const MARKET_OPEN_HOUR = 9;
+        const MARKET_CLOSE_HOUR = 16;
+        const MARKET_DAYS = [1, 2, 3, 4, 5]; 
+        
+        const metricsLoader = document.getElementById('metrics-loader');
+        const metricsTable = document.getElementById('metrics-table');
+        const liveTicker = document.getElementById('live-ticker');
+        const dataStatus = document.getElementById('data-status');
+        
+        //function to see if the market is open and if its a trading day/within the right hours to trade
+        //note: only the ticker tape should rely on this function and the data table only needs to be updated after market close each day
+        function isMarketOpen() {
+            const now = new Date();
+            const utcHours = now.getUTCHours();
+            const utcDay = now.getUTCDay();
+            const estHours = (utcHours - 4 + 24) % 24; 
+            if (!MARKET_DAYS.includes(utcDay)) return false;
+            return (estHours > MARKET_OPEN_HOUR || (estHours === MARKET_OPEN_HOUR && now.getUTCMinutes() >= 30)) && 
+                   estHours < MARKET_CLOSE_HOUR;
+        }
+        
+        //silly status things that lets the code know if the market is live or if its previous close data
+        function updateDataStatus() {
+            const isOpen = isMarketOpen();
+            const statusDot = dataStatus.querySelector('.status-dot');
+            const statusText = dataStatus.querySelector('span:last-child');
+            
+            if (isOpen) {
+                statusDot.className = 'status-dot status-live';
+                statusText.textContent = 'Live Market Data';
+            } else {
+                statusDot.className = 'status-dot status-delayed';
+                statusText.textContent = 'Delayed Data (Previous Close)';
+            }
+        }
+        
+        //stuff for generating the efficient frontier, currently based on dummy data-- need to swap to actual CRSP data
+        const frontierCtx = document.getElementById('frontier-chart').getContext('2d');
+        function generateEfficientFrontierData(type) {
+            const frontierData = [];
+            const individualAssets = [];
+            const capitalMarketLine = [];
+            const equalWeightLine = [];
+            
+            //data varies based on selection 
+            let baseReturn, baseRisk, riskFreeRate;
+            switch(type) {
+                case 'large_cap':
+                    baseReturn = 0.08;
+                    baseRisk = 0.15;
+                    riskFreeRate = 0.02;
+                    break;
+                case 'mid_cap':
+                    baseReturn = 0.10;
+                    baseRisk = 0.18;
+                    riskFreeRate = 0.02;
+                    break;
+                case 'small_cap':
+                    baseReturn = 0.12;
+                    baseRisk = 0.22;
+                    riskFreeRate = 0.02;
+                    break;
+                default:
+                    baseReturn = 0.08;
+                    baseRisk = 0.15;
+                    riskFreeRate = 0.02;
+            }
+            
+            //part for generating the efficient frontier curve 
+            for (let i = 0; i <= 20; i++) {
+                const risk = baseRisk + (i * 0.01);
+                const returnVal = baseReturn + 0.4 * Math.pow(risk - baseRisk, 0.7);
+                frontierData.push({x: risk, y: returnVal});
+            }
+            
+            //part for generating the capital market line from risk-free rate to optimal portfolio
+            const optimalRisk = baseRisk + 0.08;
+            const optimalReturn = baseReturn + 0.06;
+            
+            for (let i = 0; i <= 10; i++) {
+                const t = i / 10;
+                const risk = t * optimalRisk;
+                const returnVal = riskFreeRate + t * (optimalReturn - riskFreeRate);
+                capitalMarketLine.push({x: risk, y: returnVal});
+            }
+            
+            //part for the equal weight line
+            const equalWeightReturn = baseReturn + 0.02;
+            for (let i = 0; i <= 20; i++) {
+                const risk = baseRisk + (i * 0.01);
+                equalWeightLine.push({x: risk, y: equalWeightReturn});
+            }
+            
+            //randomly generates individual assets random around the frontier-- need assets specific to portfolio integrated here
+            for (let i = 0; i < 15; i++) {
+                const risk = baseRisk + (Math.random() * 0.15);
+                const returnVal = baseReturn + (Math.random() * 0.1) - 0.05;
+                individualAssets.push({x: risk, y: returnVal});
+            }
+            
+            //part for the green dot which is the optimal portfolio 
+            const optimalPortfolio = {x: optimalRisk, y: optimalReturn};
+            
+            return { frontierData, individualAssets, optimalPortfolio, capitalMarketLine, equalWeightLine, riskFreeRate };
+        }
+        
+        //portion for fetching the stock data from Alpha Vantage, mostly based on their documentation 
+        async function fetchStockData(symbol) {
+            try {
+                metricsLoader.style.display = 'block';
+                metricsTable.style.opacity = '0.5';
+                
+                const url = `${ALPHA_VANTAGE_BASE_URL}?function=OVERVIEW&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`;
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.Note || data.Information) {
+                    throw new Error('API rate limit exceeded. Please try again later.');
+                }
+                
+                return data;
+            } catch (error) {
+                console.error('Error fetching stock data:', error);
+                //attempts to fall back to Yahoo Finance if Alpha Vantage fails, i think this part doesnt work and it falls back to dummy data
+                return await fetchStockDataFromYahoo(symbol);
+            } finally {
+                metricsLoader.style.display = 'none';
+                metricsTable.style.opacity = '1';
+            }
+        }
+        
+        //portion for the fallback to to Yahoo Finance API
+        async function fetchStockDataFromYahoo(symbol) {
+            try {
+                const url = `${YAHOO_FINANCE_BASE_URL}/${symbol}`;
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`Yahoo Finance API error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                const result = data.chart.result[0];
+                
+                //attempts to format the data to match Alpha Vantage structure, might be easier to entirely use Yahoo Finance here and do two APIs 
+                return {
+                    Symbol: symbol,
+                    Name: result.meta.symbol,
+                    PERatio: result.meta.trailingPE || 'N/A',
+                    DividendYield: result.meta.trailingAnnualDividendYield ? 
+                        (result.meta.trailingAnnualDividendYield * 100).toFixed(2) + '%' : 'N/A'
+                };
+            } catch (error) {
+                console.error('Error fetching from Yahoo Finance:', error);
+                //final fallback option where it displays dummy data because both failed 
+                return generateMockData(symbol);
+            }
+        }
+        
+        //this is the fallback mock data when everything sucks, i think it uses this right now when i usee too many Alpha Vantage calls
+        function generateMockData(symbol) {
+            const mockData = {
+                AAPL: {
+                    Symbol: 'AAPL',
+                    Name: 'Apple Inc.',
+                    PERatio: '28.5',
+                    DividendYield: '0.55%',
+                    EPS: '6.05',
+                    Beta: '1.2',
+                    '52WeekHigh': '182.94',
+                    '52WeekLow': '124.17'
+                },
+                MSFT: {
+                    Symbol: 'MSFT',
+                    Name: 'Microsoft Corporation',
+                    PERatio: '32.4',
+                    DividendYield: '0.76%',
+                    EPS: '9.65',
+                    Beta: '0.9',
+                    '52WeekHigh': '349.67',
+                    '52WeekLow': '242.51'
+                },
+                GOOGL: {
+                    Symbol: 'GOOGL',
+                    Name: 'Alphabet Inc.',
+                    PERatio: '24.8',
+                    DividendYield: 'N/A',
+                    EPS: '5.21',
+                    Beta: '1.05',
+                    '52WeekHigh': '153.78',
+                    '52WeekLow': '97.71'
+                },
+                AMZN: {
+                    Symbol: 'AMZN',
+                    Name: 'Amazon.com Inc.',
+                    PERatio: '62.1',
+                    DividendYield: 'N/A',
+                    EPS: '2.9',
+                    Beta: '1.15',
+                    '52WeekHigh': '145.86',
+                    '52WeekLow': '101.15'
+                },
+                TSLA: {
+                    Symbol: 'TSLA',
+                    Name: 'Tesla Inc.',
+                    PERatio: '76.3',
+                    DividendYield: 'N/A',
+                    EPS: '3.1',
+                    Beta: '2.0',
+                    '52WeekHigh': '299.29',
+                    '52WeekLow': '152.37'
+                },
+                AVGO: {
+                    Symbol: 'AVGO',
+                    Name: 'Broadcom Inc.',
+                    PERatio: '88.45',
+                    DividendYield: '0.68%',
+                    EPS: '3.9',
+                    Beta: '1.17',
+                    '52WeekHigh': '374.23',
+                    '52WeekLow': '138.10'
+                }
+            };
+            
+            return mockData[symbol] || mockData.AAPL;
+        }
+        
+        //portion for updating the stock metric data table 
+        async function updateStockMetrics() {
+            const symbol = document.getElementById('stock-select').value;
+            const data = await fetchStockData(symbol);
+            
+            const tableBody = metricsTable.querySelector('tbody');
+            tableBody.innerHTML = `
+                <tr>
+                    <td>P/E Ratio</td>
+                    <td class="${data.PERatio < 25 ? 'good-value' : 'bad-value'}">${data.PERatio || 'N/A'}</td>
+                    <td>${(parseFloat(data.PERatio) + 2).toFixed(1) || 'N/A'}</td>
+                    <td>22.1</td>
+                </tr>
+                <tr>
+                    <td>Volatility (Beta)</td>
+                    <td class="${data.Beta < 1 ? 'good-value' : 'bad-value'}">${data.Beta || 'N/A'}</td>
+                    <td>${(parseFloat(data.Beta) - 0.1).toFixed(1) || 'N/A'}</td>
+                    <td>1.0</td>
+                </tr>
+                <tr>
+                    <td>Dividend Yield</td>
+                    <td class="${parseFloat(data.DividendYield) > 0.5 ? 'good-value' : 'bad-value'}">${data.DividendYield || 'N/A'}</td>
+                    <td>${data.DividendYield || 'N/A'}</td>
+                    <td>2.1%</td>
+                </tr>
+                <tr>
+                    <td>EPS</td>
+                    <td class="${parseFloat(data.EPS) > 5 ? 'good-value' : 'bad-value'}">${data.EPS || 'N/A'}</td>
+                    <td>${(parseFloat(data.EPS) - 0.5).toFixed(2) || 'N/A'}</td>
+                    <td>8.7</td>
+                </tr>
+                <tr>
+                    <td>52W Range</td>
+                    <td class="${(parseFloat(data['52WeekHigh']) - parseFloat(data['52WeekLow'])) / parseFloat(data['52WeekLow']) < 0.5 ? 'good-value' : 'bad-value'}">
+                        ${data['52WeekLow'] || 'N/A'} - ${data['52WeekHigh'] || 'N/A'}
+                    </td>
+                    <td>N/A</td>
+                    <td>40-60%</td>
+                </tr>
+            `;
+
+            document.querySelectorAll('.card-title')[0].textContent = `${data.Name} Metrics`;
+        }
+        
+        //fetches the real-time ticker data with fallback to previous close (it falls back to dummy data-- need to fix)
+        async function updateTickerData() {
+            const symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'NVDA', 'JPM', 'V', 'AVGO'];
+            const isOpen = isMarketOpen();
+            
+            try {
+                let tickerHTML = '';
+                
+                for (const symbol of symbols) {
+                    try {
+                        //uses Alpha Vantage for real-time or previous close based on market hours
+                        const functionType = isOpen ? 'GLOBAL_QUOTE' : 'TIME_SERIES_DAILY';
+                        const url = `${ALPHA_VANTAGE_BASE_URL}?function=${functionType}&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`;
+                        
+                        const response = await fetch(url);
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            
+                            let price, change, changePercent;
+                            
+                            if (isOpen) {
+                                //live data is needed to be fetched 
+                                const quote = data['Global Quote'];
+                                price = parseFloat(quote['05. price']).toFixed(2);
+                                change = parseFloat(quote['09. change']).toFixed(2);
+                                changePercent = parseFloat(quote['10. change percent'].replace('%', '')).toFixed(2);
+                            } else {
+                                //market closed, uses previous close data
+                                const lastRefreshed = data['Meta Data']['3. Last Refreshed'];
+                                const timeSeries = data['Time Series (Daily)'];
+                                const latestData = timeSeries[lastRefreshed];
+                                
+                                price = parseFloat(latestData['4. close']).toFixed(2);
+                                //for a previous close, change in price is 0 (might want it to be the previous day % instead?)
+                                const prevClose = parseFloat(latestData['4. close']); 
+                                change = 0;
+                                changePercent = 0;
+                            }
+                            
+                            const changeClass = change >= 0 ? 'positive' : 'negative';
+                            const changeSign = change >= 0 ? '+' : '';
+                            
+                            tickerHTML += `
+                                <div class="ticker-item">
+                                    <span class="ticker-symbol">${symbol}</span>
+                                    <span class="ticker-price">$${data.price.toFixed(2)}</span>
+                                    <span class="${changeClass}">${changeSign}${changeValue}%</span> // <-- 'changeValue' is in dollars, not percent!
+                                </div>
+                            `;
+                        } else {
+                            throw new Error('Alpha Vantage failed');
+                        }
+                    } catch (error) {
+                        //attempted to add extended hours capabilities which is on weekdays, need some closing val for sat/sun
+                        //note: this was never actually tested cause i always ran out of API calls and/or dont have the after hours data on my phone (i do have it, just didnt want to hunt it down because lazy)
+                        try {
+                            const url = `${YAHOO_FINANCE_BASE_URL}/${symbol}`;
+                            const response = await fetch(url);
+                            
+                            if (response.ok) {
+                                const data = await response.json();
+                                const result = data.chart.result[0];
+                                
+                                let price, change, changePercent;
+                                
+                                if (isOpen) {
+                                    price = result.meta.regularMarketPrice.toFixed(2);
+                                    change = (result.meta.regularMarketPrice - result.meta.previousClose).toFixed(2);
+                                    changePercent = ((change / result.meta.previousClose) * 100).toFixed(2);
+                                } else {
+                                    price = result.meta.previousClose.toFixed(2);
+                                    change = 0;
+                                    changePercent = 0;
+                                }
+                                
+                                const changeClass = change >= 0 ? 'positive' : 'negative';
+                                const changeSign = change >= 0 ? '+' : '';
+                                
+                                tickerHTML += `
+                                    <div class="ticker-item">
+                                        <span class="ticker-symbol">${symbol}</span>
+                                        <span class="ticker-price">$${price}</span>
+                                        <span class="${changeClass}">${changeSign}${changePercent}%</span>
+                                    </div>
+                                `;
+                            } else {
+                                throw new Error('Yahoo Finance failed');
+                            }
+                        } catch (yahooError) {
+                            //fallback to mock data when everything else fails (does this when all API calls are used)
+                            const mockPrices = {
+                                AAPL: { price: 0, change: 0 },
+                                MSFT: { price: 0, change: 0 },
+                                GOOGL: { price: 0, change: 0 },
+                                AMZN: { price: 0, change: 0 },
+                                TSLA: { price: 0, change: 0 },
+                                NVDA: { price: 0, change: 0 },
+                                JPM: { price: 0, change: 0 },
+                                V: { price: 0, change: 0 },
+                                AVGO: { price: 0, change: 0 }
+                            };
+                            
+                            const data = mockPrices[symbol] || mockPrices.AAPL;
+                            //market is closed, sets change to 0 for mock data
+                            const changeValue = isOpen ? data.change : 0;
+                            const changeClass = changeValue >= 0 ? 'positive' : 'negative';
+                            const changeSign = changeValue >= 0 ? '+' : '';
+                            
+                            tickerHTML += `
+                                <div class="ticker-item">
+                                    <span class="ticker-symbol">${symbol}</span>
+                                    <span class="ticker-price">$${data.price.toFixed(2)}</span>
+                                    <span class="${changeClass}">${changeSign}${changeValue}%</span>
+                                </div>
+                            `;
+                        }
+                    }
+                }
+                
+                liveTicker.innerHTML = tickerHTML;
+            } catch (error) {
+                console.error('Error updating ticker data:', error);
+            }
+        }
+        
+        //portion for creating the efficient frontier chart
+        const { frontierData, individualAssets, optimalPortfolio, capitalMarketLine, equalWeightLine, riskFreeRate } = generateEfficientFrontierData('large_cap');
+        const frontierChart = new Chart(frontierCtx, {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    {
+                        label: 'Capital Market Line',
+                        data: capitalMarketLine,
+                        borderColor: '#9C27B0',
+                        backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                        borderWidth: 2,
+                        showLine: true,
+                        fill: false,
+                        pointRadius: 0,
+                        borderDash: [5, 5]
+                    },
+                    {
+                        label: 'Equal Weight Portfolio',
+                        data: equalWeightLine,
+                        borderColor: '#2196F3',
+                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                        borderWidth: 1,
+                        showLine: true,
+                        fill: false,
+                        pointRadius: 0,
+                        borderDash: [2, 2]
+                    },
+                    {
+                        label: 'Efficient Frontier',
+                        data: frontierData,
+                        borderColor: '#edd39a',
+                        backgroundColor: 'rgba(237, 211, 154, 0.1)',
+                        borderWidth: 3,
+                        showLine: true,
+                        fill: false,
+                        pointRadius: 0,
+                        tension: 0.2
+                    },
+                    {
+                        label: 'Optimal Portfolio',
+                        data: [optimalPortfolio],
+                        backgroundColor: '#4caf50',
+                        borderColor: '#4caf50',
+                        pointRadius: 8,
+                        pointHoverRadius: 10
+                    },
+                    {
+                        label: 'Individual Assets',
+                        data: individualAssets,
+                        backgroundColor: '#f44336',
+                        borderColor: '#f44336',
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom',
+                        title: {
+                            display: true,
+                            text: 'Risk (Standard Deviation)',
+                            color: '#ddd'
+                        },
+                        ticks: {
+                            color: '#ddd',
+                            callback: function(value) {
+                                return (value * 100).toFixed(0) + '%';
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        min: 0.1,
+                        max: 0.35
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Expected Return',
+                            color: '#ddd'
+                        },
+                        ticks: {
+                            color: '#ddd',
+                            callback: function(value) {
+                                return (value * 100).toFixed(0) + '%';
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        min: 0.0,
+                        max: 0.2
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false,
+                        labels: {
+                            color: '#ddd'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const point = context.raw;
+                                const datasetLabel = context.dataset.label || '';
+                                
+                                if (datasetLabel === 'Efficient Frontier') {
+                                    return `Frontier: ${(point.y * 100).toFixed(1)}% return, ${(point.x * 100).toFixed(1)}% risk`;
+                                } else if (datasetLabel === 'Optimal Portfolio') {
+                                    return `Optimal: ${(point.y * 100).toFixed(1)}% return, ${(point.x * 100).toFixed(1)}% risk`;
+                                } else if (datasetLabel === 'Capital Market Line') {
+                                    return `CML: ${(point.y * 100).toFixed(1)}% return, ${(point.x * 100).toFixed(1)}% risk`;
+                                } else if (datasetLabel === 'Equal Weight Portfolio') {
+                                    return `Equal Weight: ${(point.y * 100).toFixed(1)}% return`;
+                                } else {
+                                    return `Asset: ${(point.y * 100).toFixed(1)}% return, ${(point.x * 100).toFixed(1)}% risk`;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        //updates the frontier when selection (caps) is changed 
+        document.getElementById('frontier-select').addEventListener('change', function() {
+            const newData = generateEfficientFrontierData(this.value);
+            
+            frontierChart.data.datasets[0].data = newData.capitalMarketLine;
+            frontierChart.data.datasets[1].data = newData.equalWeightLine;
+            frontierChart.data.datasets[2].data = newData.frontierData;
+            frontierChart.data.datasets[3].data = [newData.optimalPortfolio];
+            frontierChart.data.datasets[4].data = newData.individualAssets;
+            
+            frontierChart.update();
+        });
+        
+        //updates the table when stock selection changed
+        document.getElementById('stock-select').addEventListener('change', updateStockMetrics);
+        
+        //portion for initalizing the data table 
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDataStatus();
+            updateStockMetrics();
+            updateTickerData();
+            
+            //refreshes the ticker data every 60 seconds, might want it more spread out to avoid wasting all API calls within like 2 minutes
+            setInterval(() => {
+                updateDataStatus();
+                updateTickerData();
+            }, 60000);
+        });
+    </script>
+</body>
+</html>
