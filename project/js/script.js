@@ -4,18 +4,24 @@ document.getElementById("loadBtn").addEventListener("click", () => {
 });
 
 async function loadChart(symbol) {
-  const url = `http://127.0.0.1:5000/api/history/${symbol}`;
   const chartDiv = document.getElementById("chart");
-  chartDiv.innerHTML = ""; // Clear previous chart
+  chartDiv.innerHTML = "Loading data...";
 
   try {
-    const res = await fetch(url);
+    const res = await fetch("http://127.0.0.1:3000/api/load", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ symbol })
+    });
+
     const data = await res.json();
+    chartDiv.innerHTML = "";
 
     if (data.error) {
       chartDiv.textContent = "Error: " + data.error;
       return;
     }
+
     if (!data.history || data.history.length === 0) {
       chartDiv.textContent = `No data found for ${symbol}`;
       return;
@@ -27,6 +33,14 @@ async function loadChart(symbol) {
     }));
 
     drawChart(history, symbol);
+
+    // Display beta value
+    if (data.beta !== null && data.beta !== undefined) {
+      const betaInfo = document.createElement("p");
+      betaInfo.style.marginTop = "10px";
+      betaInfo.textContent = `Systematic Risk (Beta): ${data.beta.toFixed(2)}`;
+      chartDiv.appendChild(betaInfo);
+    }
   } catch (err) {
     chartDiv.textContent = "Error fetching data.";
     console.error(err);
