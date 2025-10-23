@@ -1,6 +1,7 @@
 // backend/server.js
 const express = require("express");
 const axios = require("axios");
+const path = require("path");
 
 const app = express();
 const PORT_ME = 3000;
@@ -13,6 +14,9 @@ function validReq(queryArgs) {
     const validReq = reqArgs.every(element => element in queryArgs);
     return validReq;
 }
+
+// serve the code structure in /public
+app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/api/ping", async (req, res) => {
 
