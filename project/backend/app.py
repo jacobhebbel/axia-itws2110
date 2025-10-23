@@ -24,8 +24,7 @@ def ping():
 @app.route("/data", methods=["GET"])
 def yfinanceCall():
     """For fetching data from yfinance
-    
-        Parameters:        
+    Parameters:        
             tickers:        a comma-separated string of length-4 tickers to collect data on
             interval:       
             period:         
@@ -47,11 +46,16 @@ def yfinanceCall():
     try:
         data = yf.download(tickers, period=period, interval=interval)
         print(data.to_numpy())
-        return jsonify({"success": True}), 200
+
+        dataAsJson = data.to_json(orient="records", date_format="iso")
+        return jsonify({
+            "success": True,
+            "data": dataAsJson
+            }), 200
     
     # if an error occurred, likely a parameter is malformed
     except:
         return jsonify({
             "success": False, 
-            "err": "1 or more parameters invalid"
+            "err": "1 or more parameters malformed"
             }), 400
