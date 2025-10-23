@@ -1,77 +1,86 @@
 // backend/server.js
 const express = require("express");
-const { spawn } = require("child_process");
-const path = require("path");
-const bodyParser = require("body-parser");
-const cors = require("cors");
+const axios = require("axios");
 
 const app = express();
-const PORT = 3000;
+const PORT_ME = 3000;
+const PORT_FLASK = 4000;
+const URL_FLASK = `http:\\localhost:${PORT_FLASK}`;
 
-app.use(cors());
-app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, "..")));
-
-function runPython(script, args = []) {
-    return new Promise((resolve, reject) => {
-        const py = spawn("python", [script, ...args]);
-        let output = "";
-        let error = "";
-
-        py.stdout.on("data", (data) => (output += data.toString()));
-        py.stderr.on("data", (data) => (error += data.toString()));
-
-        py.on("close", (code) => {
-        if (code !== 0 || error) return reject(error || "Python failed");
-        try {
-            resolve(JSON.parse(output));
-        } catch {
-            reject("Invalid JSON from Python script");
-        }
-        });
-    });
+// checks if all required args are present in request query parameters
+function validReq(queryArgs) {
+    const reqArgs = ['tickers', 'interval', 'period'];
+    const validReq = reqArgs.every(element => element in queryArgs);
+    return validReq;
 }
 
-app.post("/api/load", async (req, res) => {
-  const { symbol } = req.body;
-  if (!symbol) return res.status(400).json({ error: "Missing symbol" });
-
-  const yFinancePath = path.join(__dirname, "scripts", "yFinanceCall.py");
-  const betaPath = path.join(__dirname, "scripts", "systematicrisk.py");
+app.get("/api/ping", async (req, res) => {
 
     try {
-        const historyData = await runPython(yFinancePath, [symbol]);
-
-        const closes = historyData.history.map((d) => d.close);
-        const betaInput = JSON.stringify({ prices: closes });
-        const betaProcess = spawn("python", [betaPath, betaInput]);
-
-        let betaOut = "";
-        let betaErr = "";
-        betaProcess.stdout.on("data", (d) => (betaOut += d.toString()));
-        betaProcess.stderr.on("data", (d) => (betaErr += d.toString()));
-
-        betaProcess.on("close", (code) => {
-            if (code !== 0 || betaErr) {
-                console.error(betaErr);
-                return res.json({ ...historyData, beta: null, betaError: betaErr });
-            }
-            let betaVal = null;
-            try {
-                const parsed = JSON.parse(betaOut);
-                betaVal = parsed.beta ?? null;
-            } catch {
-                const num = parseFloat(betaOut);
-                if (!isNaN(num)) betaVal = num;
-            }
-            res.json({ ...historyData, beta: betaVal });
+        const { data } = await axios.get(`${URL_FLASK}/ping`, {
+            timeout: 50000000
         });
-    } catch (err) {
-        console.error("Server error:", err);
-        res.status(500).json({ error: err.toString() });
+
+        return res.status(200).json(data);
+    } catch(error) {
+        
+        console.log(error);
+        
+        return res.status(500).json({
+            'success': false,
+            'err': 'could not ping server'
+        });
+    }
+
+});
+
+app.get("/api/data", async (req, res) => {
+
+    // validates request
+    if (!validReq(req.query)) {
+        return res.status(400).json({
+            'success': false,
+            'err': '1 or more required parameters missing',
+            'requiredParams': ['tickers', 'interval', 'period']
+        });
+    }
+
+    // parses vars from query args ({validReq is true} ==> {all args present})
+    const query = new URLSearchParams(req.query);
+    
+    try {
+
+        // axios can succeed, timeout, error with response, or error with no response
+        const { data } = await axios.get(`${URL_FLASK}/data?${query.toString()}`, {
+            'timeout': 5000
+        });
+
+        return res.status(200).json(data);
+    
+    // timeout, error with response, or error with no response 
+    } catch(error){
+
+        // axios got a non 200 status code
+        if (error.response) {
+            const response = error.response;
+            console.log(response.status);
+            console.log(response.data);
+            
+            return res.status(response.status).json(response.data);
+        }
+        
+        // axios got no response *uh oh*
+        else {
+            console.log("No response from server:", error.message);
+
+            return res.status(500).json({
+                'success': false,
+                'err': 'Could not connect to flask service'
+            });
+        }
     }
 });
 
-app.listen(PORT, () =>
-    console.log(`Server running at http://localhost:${PORT}`)
+app.listen(PORT_ME, () =>
+    console.log(`Server running at http://localhost:${PORT_ME}`)
 );
