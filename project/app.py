@@ -39,13 +39,7 @@ def yfinanceCall():
             period:         
     """
 
-    # checks if all args are present
-    if not validRequest(request):
-        return jsonify({
-            "success": False, 
-            "err": "request missing parameters", 
-            "requiredParams": ['tickers', 'interval', 'period']
-            }), 400
+    
 
     # constructs the query
     tickers = list(str(request.args.get('tickers')).split(','))
@@ -53,17 +47,18 @@ def yfinanceCall():
     period = str(request.args.get('period'))
 
     try:
+        # if yf throws an error, it should imply the service is down (we have strong error checking)
         res = yf.download(tickers, period=period, interval=interval) 
         data = res if res is not None else pd.DataFrame()
 
+        # script results is a dict of our .. script results
         scriptResults = runScripts(data)
-        #dataAsJson = data.to_json(orient="records", date_format="iso")
         return jsonify(scriptResults), 200
     
-    # if an error occurred, likely a parameter is malformed
+    # if an error occurred, likely yf is down
     except Exception as e:
         print(e)
         return jsonify({
             "success": False, 
-            "err": "1 or more parameters malformed"
-            }), 400
+            "err": "an internal service is currently unavailable"
+            }), 500
