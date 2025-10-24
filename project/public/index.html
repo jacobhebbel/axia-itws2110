@@ -9,8 +9,8 @@
 </head>
 <body>
     <header>
-        <img src="../lab1/images/logo.png" alt="Axia Logo" class="logo">
-        <img src="../lab1/images/name.png" alt="Axia - Smart Finance, Simple Solutions" class="title-img">
+        <img src="../../lab1/images/logo.png" alt="Axia Logo" class="logo">
+        <img src="../../lab1/images/name.png" alt="Axia - Smart Finance, Simple Solutions" class="title-img">
     </header>
 
     <div class="ticker-container">
@@ -93,8 +93,28 @@
                 </div>
             </div>
         </div>
+        
+        <button id="openMenuBtn">Open Menu</button>
+
+        <!-- Popup Overlay -->
+        <div class="overlay" id="overlay">
+            <div class="menu">
+                <h2>Create a New Graph</h2>
+                <div class="stock-selector">
+                    <select class="stock-select" id="frontier-select">
+                        <option value="efficient_frontier">Efficient Frontier</option>
+                        <option value="systemic_risk">Systemic Risk</option>
+                        <option value="total_risk_contribution">Total Risk Contribution</option>
+                    </select>
+                </div>
+                <input type="text" id = "tickerValues" placeholder="Enter a value">
+                <button id = "addBtn">Enter</button>
+                <div id = "tickerList"></div>
+            </div>
+        </div>
     </div>
 
+    <script src = "js/project.js"></script>
     <script>
         //API stuff here, i highly recommend finding something thats not alpha vantage due to their limit on number of calls her day (its bad, shouldnt use for both data table and ticker tape)
         const ALPHA_VANTAGE_BASE_URL = 'https://www.alphavantage.co/query';
