@@ -1,73 +1,49 @@
+import pandas as pd
 import numpy as np
-import datetime as dt
 
-OPEN_PRICE, CLOSE_PRICE = 0, 1
-
-def jsonToNumpyArrays(jsonOfEverything: dict):
-
-    global OPEN_PRICE, CLOSE_PRICE
-
-    aStock, aDateRange = jsonOfEverything.items()[0]
-    numStocks, numDates = len(jsonOfEverything.keys()), len(aDateRange.keys())
-
-    # mapping a thing to its index in the 3D array
-    stockToIndex = {ticker: idx for ticker, idx in zip(jsonOfEverything.keys(), range(numStocks))}
-    dateToIndex = {dt.datetime.fromisoformat(date): idx for date, idx in zip(aDateRange.keys(), range(numDates))}
+def weights(capitalByTicker: np.ndarray | None, tickers: list, useEqualWeights: bool):
+    """Given a list of tickers and their capital, computes the weights for each stock"""
+    if useEqualWeights or capitalByTicker is None:
+        w = (1 / len(tickers)) * np.ones(len(tickers))
+        return w
     
-    # empty initialization of np matrix
-    historicalData = np.empty((numStocks, numDates, 2))
+    totalCapital = np.sum(capitalByTicker[:])
+    w = capitalByTicker[:] / totalCapital
+    return w
+
+def returns(data: pd.DataFrame) -> pd.DataFrame:
+    """Computes daily closing log returns"""
+    closingPrices = data.xs('Close', level=0, axis=1)
     
-    for stock, stockIdx in stockToIndex.items():
-        for date, dateIdx in dateToIndex.items():
-
-            stockOpenPrice = float(jsonOfEverything[stock][date.isoformat()][OPEN_PRICE])
-            stockClosePrice = float(jsonOfEverything[stock][date.isoformat()][CLOSE_PRICE])
-
-            historicalData[stockIdx, dateIdx] = np.array([stockOpenPrice, stockClosePrice])
-
-    return historicalData, stockToIndex, dateToIndex
-
-
-
-def computeReturnsVector(prices):
-    returnsVector = np.empty((len(prices.keys())))
-
-    for stock in prices.keys():
-        historicalData = prices[stock]
-
-        for i in range(1, len(historicalData.keys())):
-            returnsVector[i] = 
-    pass
-
-def marginalContributionToRisk():
-    pass
-
-def contributionToTotalRisk():
-    pass
-
-def portfolioVolatility():
-    pass
-
-def assetWeightVector(tickerToCapital: dict, portfolioSize: int, useEqualWeights: bool, ):
-    if useEqualWeights or len(tickerToCapital) == 0:
-        return np.ones((portfolioSize))
+    # Keep NaNs where a stock hasn't started or has stopped trading
+    logReturns = np.log(closingPrices / closingPrices.shift(1))
     
-    totalCapitalInvested = sum([capital for capital in tickerToCapital.values()])
-    assetWeightVector = np.empty((len(tickerToCapital.keys())))
-    
-    for i, ticker, capitalInvested in enumerate(tickerToCapital.items()):
-        assetWeightVector[i] = capitalInvested / totalCapitalInvested
+    return pd.DataFrame(logReturns)
 
-    return assetWeightVector
+def start(data: pd.DataFrame) -> dict:
+    """
+    Returns a dict of MCTR values for each stock, 
+    properly handling stocks with different trading histories
+    """
+    tickers = data.xs('Close', level=0, axis=1).columns.tolist()
+    log_returns = returns(data)
     
-def main():
+    # Drop rows where all stocks are NaN, but keep NaNs for missing stocks
+    log_returns = log_returns.dropna(how='all')
 
-    jsonInput = {} # start here
-    tickerToCapital = {} # assume we have. if not, make this None and change useEqualWeights
-    historicalData, stockToIndex, datetimeToIndex = jsonToNumpyArrays(jsonInput)
+    # Fill remaining NaNs with 0 for covariance computation
+    # This assumes that missing trading days do not contribute to returns
+    r = log_returns.fillna(0).to_numpy()
+    if len(tickers) > 1:
+        cov = np.cov(r, rowvar=False)
+    else:
+        # For a single stock, variance
+        cov = np.array([[np.var(r, ddof=1)]])
     
-    weights = assetWeightVector(tickerToCapital, len(tickerToCapital.keys()), useEqualWeights=False)
-    returnsVector = computeReturnsVector(tickerToOpenCloseVals)
-
-if __name__ == '__main__':
-    main()
+    w = weights(None, tickers, useEqualWeights=True)
+    sigma = np.sqrt(w.T @ cov @ w)
+    
+    mctr = pd.Series((cov @ w) / sigma, index=tickers)
+    mctr_norm = mctr / mctr.sum()
+    
+    return mctr_norm.to_dict()

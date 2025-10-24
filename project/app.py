@@ -1,26 +1,54 @@
 import yfinance as yf
+import pandas as pd
 from flask import Flask, request, jsonify
-from scripts.validateTicker import validate_ticker
+from scripts.validateTicker import validate_ticker as isValidTicker
+from flask import Flask, request, jsonify, Request
 
+from scripts import riskChart, efficientFrontier, systematicrisk
 
-# checks if all args are there, not if they're formatted properly
-def validRequest(requestObj: request):
+def runScripts(data: pd.DataFrame) -> dict:
+    """link between service and scripts. returns a dict of stat: val pairs"""
+    res = {}
+    
+    res['mctr'] = riskChart.start(data)
+    res['efficientFrontier'] = efficientFrontier.start(data)
+    #res['systematicRisk'] = systematicrisk.start(data)
+
+    return res
+
+def validateRequest(requestObj: Request) -> tuple[bool, dict]:
     """Ensures the request has required parameters"""
-    requiredArgs = ['tickers', 'period', 'interval']
-    
-    tickerString = request.args.get('tickers')
-    
-    rawTickers = tickerString.split(',')
-    
-    for ticker in rawTickers:
-        cleanedTicker = ticker.strip().upper()
-        if not validate_ticker(cleanedTicker):
-            return False
 
-    if all(arg in requestObj.args.keys() for arg in requiredArgs):
-        return True
-    else:
-        return False
+    res = {}
+    res['success'] = False
+    res['requiredParams'] = ['tickers', 'period', 'interval']
+    res['validPeriods'] = ['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y']
+    res['validIntervals'] = ['1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h', '1d', '5d', '1wk', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y']
+    
+    # error checking params
+    if any(arg not in res['requiredParams'] for arg in requestObj.args.keys()):
+        res['error'] = 'missing required parameter'
+        return False, res
+
+    rawTickers = str(request.args.get('tickers')).split(',')    
+    # error checking tickers
+    if any(not isValidTicker(ticker) for ticker in rawTickers):
+        res['error'] = 'at least 1 ticker was invalid'
+        return False, res
+
+    # error checking period
+    validPeriods, period = res['validPeriods'], requestObj.args.get('period')
+    if period not in validPeriods:
+        res['error'] = 'period not valid'
+        return False, res
+    
+    # error checking interval
+    validIntervals, interval = res['validIntervals'], requestObj.args.get('interval')
+    if interval not in validIntervals:
+        res['error'] = 'interval not valid'
+        return False, res
+    
+    return True, {}
 
 app = Flask(__name__)
 
@@ -40,32 +68,31 @@ def yfinanceCall():
             period:         
     """
 
-    # checks if all args are present
-    if not validRequest(request):
-        return jsonify({
-            "success": False, 
-            "err": "request missing parameters", 
-            "requiredParams": ['tickers', 'interval', 'period']
-            }), 400
+    isValid, error = validateRequest(request)
+    if not isValid:
+        return error, 400
 
     # constructs the query
-    tickers = list(request.args.get('tickers').split(','))
-    interval = request.args.get('interval')
-    period = request.args.get('period')
+    tickers = list(str(request.args.get('tickers')).split(','))
+    interval = str(request.args.get('interval'))
+    period = str(request.args.get('period'))
 
     try:
-        data = yf.download(tickers, period=period, interval=interval)
-        print(data.to_numpy())
+        # if yf throws an error, it should imply the service is down (we have strong error checking)
+        res = yf.download(tickers, period=period, interval=interval, timeout=50) 
+        data = res if res is not None else pd.DataFrame()
 
-        dataAsJson = data.to_json(orient="records", date_format="iso")
-        return jsonify({
-            "success": True,
-            "data": dataAsJson
-            }), 200
+        # script results is a dict of our .. script results
+        scriptResults = runScripts(data)
+        return scriptResults, 200
     
-    # if an error occurred, likely a parameter is malformed
-    except:
+    # if an error occurred, likely yf is down
+    except Exception as e:
+        print(e)
         return jsonify({
             "success": False, 
-            "err": "1 or more parameters malformed"
-            }), 400
+            "err": "an internal service is currently unavailable"
+            }), 500
+    
+if __name__ == "__main__":
+    app.run(debug=True, port=4000)
