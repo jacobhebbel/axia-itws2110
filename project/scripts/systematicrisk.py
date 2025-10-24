@@ -1,21 +1,29 @@
-import sys, json
 import numpy as np
+import pandas as pd
 
-def compute_returns(prices):
-    prices = np.array(prices)
-    return (prices[1:] - prices[:-1]) / prices[:-1]
+def computeReturns(prices):
+    return prices.pct_change().dropna()
 
-def compute_beta(stock_prices, market_prices=None):
-    if market_prices is None:
-        market_prices = np.linspace(stock_prices[0], stock_prices[-1], len(stock_prices))
-    stock_returns = compute_returns(stock_prices)
-    market_returns = compute_returns(market_prices)
-    cov_matrix = np.cov(stock_returns, market_returns)
-    beta = cov_matrix[0, 1] / cov_matrix[1, 1]
+def calculateBeta(stock_returns, market_returns):
+    covariance = np.cov(stock_returns, market_returns)[0, 1]
+    variance = np.var(market_returns)
+    beta = covariance / variance
+    return np.round(beta, 3)
+
+def start(data: pd.DataFrame) -> pd.Series:
+    close_prices = data.xs('Close', level=0, axis=1)
+    stock_col = close_prices.columns[0]
+    market_col = close_prices.columns[1]
+
+    stock_returns = computeReturns(close_prices[stock_col])
+    market_returns = computeReturns(close_prices[market_col])
+
+    aligned = pd.concat([stock_returns, market_returns], axis=1).dropna()
+    aligned.columns = ['stock', 'market']
+
+    beta = calculateBeta(aligned['stock'], aligned['market'])
+
     return beta
 
-if __name__ == "__main__":
-    arg = json.loads(sys.argv[1])
-    prices = arg.get("prices", [])
-    beta = compute_beta(prices)
-    print(json.dumps({"beta": beta}))
+
+    
