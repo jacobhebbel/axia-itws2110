@@ -1,7 +1,7 @@
 import yfinance as yf
 import pandas as pd
 from flask import Flask, request, jsonify
-from scripts.validateTicker import validate_ticker
+from scripts.validateTicker import validate_ticker as isValidTicker
 from flask import Flask, request, jsonify, Request
 
 from scripts import riskChart, efficientFrontier, systematicrisk
@@ -29,22 +29,17 @@ def validateRequest(requestObj: Request) -> tuple[bool, dict]:
     res['validPeriods'] = ['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y']
     res['validIntervals'] = ['1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h', '1d', '5d', '1wk', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y']
     
-    # error checking args
-    requiredArgs = ['tickers', 'period', 'interval']
-    
-    tickerString = request.args.get('tickers')
-    
-    rawTickers = tickerString.split(',')
-    
-    for ticker in rawTickers:
-        cleanedTicker = ticker.strip().upper()
-        if not validate_ticker(cleanedTicker):
-            return False
-
-    if any(arg not in requiredArgs for arg in requestObj.args.keys()):
-        res['error'] = 'missing requires parameter'
+    # error checking params
+    if any(arg not in res['requiredParams'] for arg in requestObj.args.keys()):
+        res['error'] = 'missing required parameter'
         return False, res
-    
+
+    rawTickers = str(request.args.get('tickers')).split(',')    
+    # error checking tickers
+    if any(not isValidTicker(ticker) for ticker in rawTickers):
+        res['error'] = 'at least 1 ticker was invalid'
+        return False, res
+
     # error checking period
     validPeriods, period = res['validPeriods'], requestObj.args.get('period')
     if period not in validPeriods:
@@ -79,7 +74,7 @@ def yfinanceCall():
 
     isValid, error = validateRequest(request)
     if not isValid:
-        return jsonify(error), 400
+        return error, 400
 
     # constructs the query
     tickers = list(str(request.args.get('tickers')).split(','))
@@ -93,7 +88,7 @@ def yfinanceCall():
 
         # script results is a dict of our .. script results
         scriptResults = runScripts(data)
-        return jsonify(scriptResults), 200
+        return scriptResults, 200
     
     # if an error occurred, likely yf is down
     except Exception as e:
