@@ -1,6 +1,7 @@
 import yfinance as yf
 import pandas as pd
 from flask import Flask, request, jsonify
+from scripts.validateTicker import validate_ticker
 
 from scripts import riskChart, efficientFrontier, systematicrisk
 
@@ -15,6 +16,15 @@ def runScripts(data: pd.DataFrame) -> dict:
 def validRequest(requestObj):
     """Ensures the request has required parameters"""
     requiredArgs = ['tickers', 'period', 'interval']
+    
+    tickerString = request.args.get('tickers')
+    
+    rawTickers = tickerString.split(',')
+    
+    for ticker in rawTickers:
+        cleanedTicker = ticker.strip().upper()
+        if not validate_ticker(cleanedTicker):
+            return False
 
     if all(arg in requestObj.args.keys() for arg in requiredArgs):
         return True
