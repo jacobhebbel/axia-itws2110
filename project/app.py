@@ -1,11 +1,21 @@
 import yfinance as yf
 from flask import Flask, request, jsonify
+from scripts.validateTicker import validate_ticker
 
 
 # checks if all args are there, not if they're formatted properly
 def validRequest(requestObj: request):
     """Ensures the request has required parameters"""
     requiredArgs = ['tickers', 'period', 'interval']
+    
+    tickerString = request.args.get('tickers')
+    
+    rawTickers = tickerString.split(',')
+    
+    for ticker in rawTickers:
+        cleanedTicker = ticker.strip().upper()
+        if not validate_ticker(cleanedTicker):
+            return False
 
     if all(arg in requestObj.args.keys() for arg in requiredArgs):
         return True
