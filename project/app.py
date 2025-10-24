@@ -8,6 +8,7 @@ def runScripts(data: pd.DataFrame) -> dict:
     
     res = {}
     res['mctr'] = riskChart.start(data).to_json()
+    res['efficientFrontier'] = efficientFrontier.start(data).to_json()
     return res
 
 # checks if all args are there, not if they're formatted properly
