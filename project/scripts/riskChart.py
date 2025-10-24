@@ -18,7 +18,7 @@ def returns(data: pd.DataFrame) -> pd.DataFrame:
     # Keep NaNs where a stock hasn't started or has stopped trading
     logReturns = np.log(closingPrices / closingPrices.shift(1))
     
-    return logReturns
+    return pd.DataFrame(logReturns)
 
 def start(data: pd.DataFrame) -> dict:
     """
