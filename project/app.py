@@ -1,9 +1,17 @@
 import yfinance as yf
+import pandas as pd
 from flask import Flask, request, jsonify
 
+from scripts import riskChart, efficientFrontier, systematicrisk
+
+def runScripts(data: pd.DataFrame) -> dict:
+    
+    res = {}
+    res['mctr'] = riskChart.start(data).to_json()
+    return res
 
 # checks if all args are there, not if they're formatted properly
-def validRequest(requestObj: request):
+def validRequest(requestObj):
     """Ensures the request has required parameters"""
     requiredArgs = ['tickers', 'period', 'interval']
 
@@ -39,22 +47,21 @@ def yfinanceCall():
             }), 400
 
     # constructs the query
-    tickers = list(request.args.get('tickers').split(','))
-    interval = request.args.get('interval')
-    period = request.args.get('period')
+    tickers = list(str(request.args.get('tickers')).split(','))
+    interval = str(request.args.get('interval'))
+    period = str(request.args.get('period'))
 
     try:
-        data = yf.download(tickers, period=period, interval=interval)
-        print(data.to_numpy())
+        res = yf.download(tickers, period=period, interval=interval) 
+        data = res if res is not None else pd.DataFrame()
 
-        dataAsJson = data.to_json(orient="records", date_format="iso")
-        return jsonify({
-            "success": True,
-            "data": dataAsJson
-            }), 200
+        scriptResults = runScripts(data)
+        #dataAsJson = data.to_json(orient="records", date_format="iso")
+        return jsonify(scriptResults), 200
     
     # if an error occurred, likely a parameter is malformed
-    except:
+    except Exception as e:
+        print(e)
         return jsonify({
             "success": False, 
             "err": "1 or more parameters malformed"
