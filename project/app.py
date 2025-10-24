@@ -9,14 +9,10 @@ from scripts import riskChart, efficientFrontier, systematicrisk
 def runScripts(data: pd.DataFrame) -> dict:
     """link between service and scripts. returns a dict of stat: val pairs"""
     res = {}
-    try: 
     
-        res['mctr'] = riskChart.start(data)
-        res['efficientFrontier'] = efficientFrontier.start(data)
-        #res['systematicRisk'] = systematicrisk.start(data)
-
-    except Exception as e:
-        print(e)
+    res['mctr'] = riskChart.start(data)
+    res['efficientFrontier'] = efficientFrontier.start(data)
+    #res['systematicRisk'] = systematicrisk.start(data)
 
     return res
 
