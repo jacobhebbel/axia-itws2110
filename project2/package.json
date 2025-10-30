@@ -10,6 +10,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@factset/sdk-factsetfundamentals": "^4.1.0",
+    "@factset/sdk-utils": "^2.1.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0"
   }

@@ -1,4 +1,8 @@
 /* Load .env */
+require('dotenv').config();
+
+/* Import Functions */
+const { getFactset, getSP } = require('./util.js');
 
 /* Import Packages */
 const { express } = require('express');
@@ -31,8 +35,8 @@ server.get('/api/valuation/:ticker', async (req, res) => {
     
     try {
         /* Call APIs */
-        const factsetData = await getFactsetData(stock);
-        const spData = await getSpData(stock);
+        const factsetData = await getFactset(stock);
+        const spData = await getSP(stock);
 
         /* Restructure data into [stat: {factset: , sp: }] pairs */
         const data = reorganizeData(factsetData, spData);
@@ -43,4 +47,8 @@ server.get('/api/valuation/:ticker', async (req, res) => {
     catch(error) {
         return res.status(500).send('Internal Server Error');
     }
+});
+
+server.listen(port=PORT, () => {
+    console.log(`server is live on port ${PORT}`);
 });
