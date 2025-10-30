@@ -1,5 +1,6 @@
 import yfinance as yf
 import pandas as pd
+import threading
 from flask import Flask, request, jsonify
 from scripts.validateTicker import validate_ticker as isValidTicker
 from flask import Flask, request, jsonify, Request
@@ -52,6 +53,17 @@ def validateRequest(requestObj: Request) -> tuple[bool, dict]:
 
 app = Flask(__name__)
 
+# helper function to download tickers individually
+def download_ticker(ticker, period, interval, data, lock):
+    try:
+        res = yf.download(ticker, period=period, interval=interval, timeout=50)
+        with lock:
+            data[ticker] = res['Close']
+    except Exception as e:
+        print(e)
+        with lock:
+            data[ticker] = pd.Series(dtype=float)
+
 # ping to test connection
 @app.route("/ping", methods=["GET"])
 def ping():
@@ -78,9 +90,21 @@ def yfinanceCall():
     period = str(request.args.get('period'))
 
     try:
+
+        lock = threading.Lock()
+        data = pd.DataFrame()
+        threads = []
+        for ticker in tickers:
+            thread = threading.Thread(target=download_ticker, args=(ticker, period, interval, data, lock))
+            thread.start()
+            threads.append(thread)
+
+        for thread in threads:
+            thread.join()
+
         # if yf throws an error, it should imply the service is down (we have strong error checking)
-        res = yf.download(tickers, period=period, interval=interval, timeout=50) 
-        data = res if res is not None else pd.DataFrame()
+        #res = yf.download(tickers, period=period, interval=interval, timeout=50) 
+        #data = res if res is not None else pd.DataFrame()
 
         # script results is a dict of our .. script results
         scriptResults = runScripts(data)

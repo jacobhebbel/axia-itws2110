@@ -13,10 +13,9 @@ def weights(capitalByTicker: np.ndarray | None, tickers: list, useEqualWeights: 
 
 def returns(data: pd.DataFrame) -> pd.DataFrame:
     """Computes daily closing log returns"""
-    closingPrices = data.xs('Close', level=0, axis=1)
     
     # Keep NaNs where a stock hasn't started or has stopped trading
-    logReturns = np.log(closingPrices / closingPrices.shift(1))
+    logReturns = np.log(data / data.shift(1))
     
     return pd.DataFrame(logReturns)
 
@@ -25,7 +24,7 @@ def start(data: pd.DataFrame) -> dict:
     Returns a dict of MCTR values for each stock, 
     properly handling stocks with different trading histories
     """
-    tickers = data.xs('Close', level=0, axis=1).columns.tolist()
+    tickers = data.columns.tolist()
     log_returns = returns(data)
     
     # Drop rows where all stocks are NaN, but keep NaNs for missing stocks

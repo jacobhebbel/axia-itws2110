@@ -9,24 +9,23 @@ def calculateRisk(daily_returns):
 
 def start(data: pd.DataFrame) -> dict:
     
-    tickers = data.xs('Close', level=0, axis=1).columns.tolist()
-    close_prices = data.xs('Close', level=0, axis=1)
+    tickers = data.columns.tolist()
 
     # First valid price per stock (vectorized via apply)
-    start_prices = close_prices.apply(lambda x: x[x.first_valid_index()])
+    start_prices = data.apply(lambda x: x[x.first_valid_index()])
 
     # End price (last available price, vectorized)
-    end_prices = close_prices.apply(lambda x: x[x.last_valid_index()])
+    end_prices = data.apply(lambda x: x[x.last_valid_index()])
 
     # Number of trading days per stock
-    num_days = close_prices.apply(lambda x: x.count())  # ignores NaNs
+    num_days = data.apply(lambda x: x.count())  # ignores NaNs
     years = num_days / 252.0
 
     # Vectorized CAGR computation
     cagr = ((end_prices / start_prices) ** (1 / years) - 1) * 100
 
     # Vectorized risk computation (ignores NaNs automatically)
-    daily_returns = close_prices.pct_change()
+    daily_returns = data.pct_change()
     risk = daily_returns.std(ddof=1) * 100
 
     metrics_df = pd.DataFrame(

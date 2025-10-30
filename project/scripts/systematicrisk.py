@@ -11,12 +11,11 @@ def calculateBeta(stock_returns, market_returns):
     return np.round(beta, 3)
 
 def start(data: pd.DataFrame) -> pd.Series:
-    close_prices = data.xs('Close', level=0, axis=1)
-    stock_col = close_prices.columns[0]
-    market_col = close_prices.columns[1]
+    stock_col = data.columns[0]
+    market_col = data.columns[1]
 
-    stock_returns = computeReturns(close_prices[stock_col])
-    market_returns = computeReturns(close_prices[market_col])
+    stock_returns = computeReturns(data[stock_col])
+    market_returns = computeReturns(data[market_col])
 
     aligned = pd.concat([stock_returns, market_returns], axis=1).dropna()
     aligned.columns = ['stock', 'market']
