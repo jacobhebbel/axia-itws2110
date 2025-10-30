@@ -49,6 +49,6 @@ server.get('/api/valuation/:ticker', async (req, res) => {
     }
 });
 
-server.listen(port=PORT, () => {
+server.listen(PORT, () => {
     console.log(`server is live on port ${PORT}`);
 });

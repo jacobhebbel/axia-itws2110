@@ -5,7 +5,7 @@
     "method": "POST",
     "description": "Historical financials: revenue, net income, debt, cash, etc.",
     "params": {
-      "ids": ["TICKER_PLACEHOLDER"],
+      "ids": "TICKER_PLACEHOLDER",
       "metrics": [
         "Revenue",
         "NetIncome",
@@ -32,7 +32,7 @@
     "method": "POST",
     "description": "Historical closing prices, 52-week high/low",
     "params": {
-      "ids": ["TICKER_PLACEHOLDER"],
+      "ids": "TICKER_PLACEHOLDER",
       "startDate": "START_DATE_PLACEHOLDER",
       "endDate": "END_DATE_PLACEHOLDER",
       "frequency": "FREQUENCY_PLACEHOLDER",
@@ -45,7 +45,7 @@
     "method": "POST",
     "description": "Enterprise Value multiples for comparables",
     "params": {
-      "ids": ["TICKER_PLACEHOLDER"],
+      "ids": "TICKER_PLACEHOLDER",
       "metrics": ["EVtoRevenue", "EVtoEBITDA"],
       "startDate": "START_DATE_PLACEHOLDER",
       "endDate": "END_DATE_PLACEHOLDER",
@@ -58,7 +58,7 @@
     "method": "POST",
     "description": "Beta for CAPM / WACC",
     "params": {
-      "ids": ["TICKER_PLACEHOLDER"],
+      "ids": "TICKER_PLACEHOLDER",
       "benchmark": "BENCHMARK_PLACEHOLDER", 
       "startDate": "START_DATE_PLACEHOLDER",
       "endDate": "END_DATE_PLACEHOLDER",
@@ -71,7 +71,7 @@
     "method": "POST",
     "description": "Risk-free rate and market rates",
     "params": {
-      "ids": ["US10YT=RR"], 
+      "ids": "US10YT=RR", 
       "startDate": "START_DATE_PLACEHOLDER",
       "endDate": "END_DATE_PLACEHOLDER",
       "frequency": "FREQUENCY_PLACEHOLDER"
@@ -96,7 +96,7 @@
     "method": "POST",
     "description": "Analyst consensus: price targets, EPS/Revenue forecasts",
     "params": {
-      "ids": ["TICKER_PLACEHOLDER"],
+      "ids": "TICKER_PLACEHOLDER",
       "startDate": "START_DATE_PLACEHOLDER",
       "endDate": "END_DATE_PLACEHOLDER",
       "frequency": "FREQUENCY_PLACEHOLDER",
