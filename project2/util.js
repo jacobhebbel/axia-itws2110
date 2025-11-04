@@ -11,7 +11,7 @@ async function getFactsetData(userParams) {
 
     // 1. build a base url
     // 2. for loop over every call
-    // 2a. add user-specified variable to call
+    // 2a. add user-specified variables to call
     // 2b. execute call
     // 2c. save the results to a json 
 
@@ -24,17 +24,17 @@ async function getFactsetData(userParams) {
 
         // params is json
         for (let key in params) {
-            if (typeof params[key] === 'string') {
 
-                // replace placeholder vals with user-supplied parameters
-                params[key] = params[key].replace('TICKER_PLACEHOLDER', userParams['ticker'])
-                                            .replace('START_DATE_PLACEHOLDER', userParams['start'])
-                                            .replace('END_DATE_PLACEHOLDER', userParams['end'])
-                                            .replace('FREQUENCY_PLACEHOLDER', userParams['frequency'])
-                                            .replace('BENCHMARK_PLACEHOLDER', userParams['benchmark']);
+            if (typeof(params[key] !== 'string')) {
+                continue;
             }
 
-
+            // replace placeholder vals with user-supplied parameters
+            params[key] = params[key].replace('TICKER_PLACEHOLDER', userParams['ticker'])
+                                        .replace('START_DATE_PLACEHOLDER', userParams['start'])
+                                        .replace('END_DATE_PLACEHOLDER', userParams['end'])
+                                        .replace('FREQUENCY_PLACEHOLDER', userParams['frequency'])
+                                        .replace('BENCHMARK_PLACEHOLDER', userParams['benchmark']);
         }
 
         // ids must be array type, but its str in json for easy string typecheck
@@ -58,3 +58,9 @@ async function getFactsetData(userParams) {
 
     return callResponses;
 }
+
+async function getCapitalData() {
+
+}
+
+module.exports = { getFactsetData, getCapitalData }

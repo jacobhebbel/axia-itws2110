@@ -2,7 +2,7 @@
 require('dotenv').config();
 
 /* Import Functions */
-const { getFactset, getSP } = require('./util.js');
+const { getFactset, getCapital } = require('./util.js');
 
 /* Import Packages */
 const { express } = require('express');
@@ -28,6 +28,30 @@ server.use(express.static(PUBLIC));
 
 */
 
+/* Gets status of APIs, server */
+server.get('/api/ping', async (req, res) => {
+
+    // factsetStatus = await testFactsetStatus()
+    // capitalStatus = await testCapitalStatus()
+
+    return res.status(200).json({
+        'factset': (factsetStatus ? 'live' : 'down'),
+        'capital': (capitalStatus ? 'live' : 'down'),
+        'server': 'live'
+    });
+});
+
+/* Gives instructions on using the api */
+server.get('/api/help', async (req, res) => {
+
+    return res.status(200).json({
+        purpose: 'add a ticker and receive a financials json with fields for filling out valuation template',
+        use: 'add a ticker to the path, then provide a benchmark, start date, end date, and frequency parameters'
+    });
+
+});
+
+/* Loads ticker financials */
 server.get('/api/valuation/:ticker', async (req, res) => {
 
     /* Pull data from request */
@@ -36,7 +60,7 @@ server.get('/api/valuation/:ticker', async (req, res) => {
     try {
         /* Call APIs */
         const factsetData = await getFactset(stock);
-        const spData = await getSP(stock);
+        const capitalData = await getCapital(stock);
 
         /* Restructure data into [stat: {factset: , sp: }] pairs */
         const data = reorganizeData(factsetData, spData);
