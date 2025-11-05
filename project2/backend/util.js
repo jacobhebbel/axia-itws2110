@@ -1,13 +1,13 @@
 /* Import API Sheets */
-const { factsetCalls } = require('./factsetCalls.json');
-const { axios } = require('axios');
+const factsetCalls = require('../factsetCalls.json');
+const axios = require('axios');
 
 /* Load env Variables */
 const FACTSET_KEY = process.env.FACTSET_API_KEY;
 const FACTSET_USER = process.env.FACTSET_API_USER;
 
 
-async function getFactsetData(userParams) {
+async function getFactset(userParams) {
 
     // 1. build a base url
     // 2. for loop over every call
@@ -24,8 +24,8 @@ async function getFactsetData(userParams) {
 
         // params is json
         for (let key in params) {
-
-            if (typeof(params[key] !== 'string')) {
+            
+            if (typeof(params[key]) !== 'string') {
                 continue;
             }
 
@@ -52,15 +52,17 @@ async function getFactsetData(userParams) {
             });
             callResponses[call.name] = response.data;
         } catch(error) {
-            console.error(`Error fetching ${ep.name}:`, err.message);
+            console.error(`Error fetching ${call.endpoint}:`, error.message);
         }
     }
 
     return callResponses;
 }
 
-async function getCapitalData() {
+async function getCapital() {
 
 }
 
-module.exports = { getFactsetData, getCapitalData }
+async function reorganizeData() {}
+
+module.exports = { getFactset, getCapital, reorganizeData }

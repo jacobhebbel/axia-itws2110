@@ -2,10 +2,10 @@
 require('dotenv').config();
 
 /* Import Functions */
-const { getFactset, getCapital } = require('./util.js');
+// const { getFactset, getCapital, reorganizeData } = require('./util.js');
 
 /* Import Packages */
-const { express } = require('express');
+const express = require('express');
 const path = require('path');
 
 /* Initialize Objects and Constants */
@@ -17,15 +17,17 @@ const PUBLIC = path.join(__dirname, 'public');
 server.use(express.static(PUBLIC));
 
 
-/* Endpoint List */ /*
-
-    1. /api/getEvaluation/:stockTicker
+/* Endpoint List */
+/*
+    1. /api/getEvaluation/:ticker
         sends a stock ticker, expects statistics to fill in the valuation form
         should respond with JSON thats organized and easy to index
 
     2. /api/ping
         responds with +/- if the service is live
 
+    3. /api/help
+        responds with a json of info on using the service
 */
 
 /* Gets status of APIs, server */
@@ -34,6 +36,8 @@ server.get('/api/ping', async (req, res) => {
     // factsetStatus = await testFactsetStatus()
     // capitalStatus = await testCapitalStatus()
 
+    const factsetStatus = true;
+    const capitalStatus = true;
     return res.status(200).json({
         'factset': (factsetStatus ? 'live' : 'down'),
         'capital': (capitalStatus ? 'live' : 'down'),
@@ -56,19 +60,17 @@ server.get('/api/valuation/:ticker', async (req, res) => {
 
     /* Pull data from request */
     const stock = req.params.ticker;
-    
+
     try {
         /* Call APIs */
-        const factsetData = await getFactset(stock);
-        const capitalData = await getCapital(stock);
-
-        /* Restructure data into [stat: {factset: , sp: }] pairs */
-        const data = reorganizeData(factsetData, spData);
-
-        return res.status(200).json(data);
+        // const factsetData = await getFactset(stock);
+        return res.status(200).json({
+            'msg': 'endpoint not implemented'
+        });
     }
     
     catch(error) {
+        console.log(error)
         return res.status(500).send('Internal Server Error');
     }
 });

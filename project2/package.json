@@ -12,6 +12,7 @@
   "dependencies": {
     "@factset/sdk-factsetfundamentals": "^4.1.0",
     "@factset/sdk-utils": "^2.1.0",
+    "axios": "^1.13.1",
     "dotenv": "^17.2.3",
     "express": "^5.1.0"
   }
