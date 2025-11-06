@@ -1,0 +1,40 @@
+[
+    {
+        "method": "GET",
+        "ids": [],
+        "endpoint": "/current-cap",
+        "parameters": {}
+    }, 
+    {
+        "method": "GET",
+        "ids": [],
+        "endpoint": "/financial-highlights",
+        "parameters": {
+            "actual": null,
+            "estimate": null
+        }
+    },
+    {
+        "method": "GET",
+        "ids": [],
+        "endpoint": "/key-stats",
+        "parameters": {}
+    },
+    {
+        "method": "GET",
+        "ids": [],
+        "endpoint": "/peer-list",
+        "parameters": {
+            "topn": null
+        }
+    },
+    {
+        "method": "GET",
+        "ids": [],
+        "endpoint": "/profile",
+        "parameters": {
+            "transactionType": null,
+            "financingType": null
+        }
+    }
+]
