@@ -6,6 +6,23 @@ from flask import Flask, request, jsonify, Request
 
 from scripts import riskChart, efficientFrontier, systematicrisk
 
+def doAnalysis(tickers: list) -> dict:
+    """
+    Creates a dictionary of P/E Ratio, Volatility betas, Dividend Yield, EPS, and 52W range stats 
+    """
+    res = {ticker: {} for ticker in tickers}
+    for ticker in tickers:
+        stock = yf.Ticker(ticker)
+        info = res[ticker]
+
+        info['p/e'] = stock.info.get("trailingPE")
+        info['volBeta'] = stock.info.get("beta")
+        info['yield'] = stock.info.get("dividendYield") * 100 if stock.info.get("dividendYield") is not None else 'N/A'
+        info['eps'] = stock.info.get("trailingEps")
+        info['52w'] = f'{stock.info.get("fiftyTwoWeekLow")} - {stock.info.get("fiftyTwoWeekHigh")}'
+
+    return res
+
 def runScripts(data: pd.DataFrame) -> dict:
     """link between service and scripts. returns a dict of stat: val pairs"""
     res = {}
@@ -84,10 +101,15 @@ def yfinanceCall():
 
         # script results is a dict of our .. script results
         scriptResults = runScripts(data)
-        return scriptResults, 200
+        analysisResults = doAnalysis(tickers)
+        return {
+            'graphs': scriptResults,
+            'stats': analysisResults
+        }, 200
     
     # if an error occurred, likely yf is down
     except Exception as e:
+        print('exception occurred')
         print(e)
         return jsonify({
             "success": False, 
