@@ -15,12 +15,28 @@ def doAnalysis(tickers: list) -> dict:
         stock = yf.Ticker(ticker)
         info = res[ticker]
 
-        info['p/e'] = stock.info.get("trailingPE")
-        info['volBeta'] = stock.info.get("beta")
-        info['yield'] = stock.info.get("dividendYield") * 100 if stock.info.get("dividendYield") is not None else 'N/A'
-        info['eps'] = stock.info.get("trailingEps")
-        info['52w'] = f'{stock.info.get("fiftyTwoWeekLow")} - {stock.info.get("fiftyTwoWeekHigh")}'
+        info['p/e'] = stock.info.get("trailingPE", 'N/A')
+        info['volBeta'] = stock.info.get("beta", 'N/A')
+        info['yield'] = stock.info.get("dividendYield") if stock.info.get("dividendYield") is not None else 'N/A'
+        info['eps'] = stock.info.get("trailingEps", 'N/A')
+        info['52w'] = f'{stock.info.get("fiftyTwoWeekLow", 'N/A')} - {stock.info.get("fiftyTwoWeekHigh", 'N/A')}'
 
+    spy = yf.Ticker("SPY")
+    res['average'] = {
+        'p/e': spy.info.get("trailingPE", 'N/A'),
+        'volBeta': spy.info.get("beta", 1.0),
+        'yield': spy.info.get("dividendYield") if spy.info.get("dividendYield") is not None else 'N/A',
+        'eps': spy.info.get("trailingEps", 'N/A'),
+        '52w': f'{spy.info.get("fiftyTwoWeekLow", 'N/A')} - {spy.info.get("fiftyTwoWeekHigh", 'N/A')}'
+    }
+
+    res['expectation'] = {
+        'p/e': spy.info.get("forwardPE", 'N/A'),
+        'volBeta': 1.0,
+        'yield': spy.info.get("trailingAnnualDividendYield") * 100 if spy.info.get("trailingAnnualDividendYield") is not None else 'N/A',
+        'eps': spy.info.get("forwardEps", 'N/A'),
+        '52w': res['average']['52w']
+    }
     return res
 
 def runScripts(data: pd.DataFrame) -> dict:
@@ -117,4 +133,4 @@ def yfinanceCall():
             }), 500
     
 if __name__ == "__main__":
-    app.run(debug=True, port=4000)
+    app.run(port=4000)
