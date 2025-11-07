@@ -38,9 +38,13 @@ server.get('/api/ping', async (req, res) => {
 
     const factsetStatus = true;
     const capitalStatus = true;
+    const edgarStatus = true;
+    const yfinStatus = true;
     return res.status(200).json({
         'factset': (factsetStatus ? 'live' : 'down'),
         'capital': (capitalStatus ? 'live' : 'down'),
+        'edgar': (edgarStatus ? 'live' : 'down'),
+        'yfin': (yfinStatus ? 'live' : 'down'),
         'server': 'live'
     });
 });
