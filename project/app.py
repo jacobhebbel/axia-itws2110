@@ -6,6 +6,69 @@ from flask import Flask, request, jsonify, Request
 
 from scripts import riskChart, efficientFrontier, systematicrisk
 
+def doAnalysis(tickers: list) -> dict:
+    """
+    Creates a dictionary of P/E Ratio, Volatility betas, Dividend Yield, EPS, and 52W range stats 
+    """
+    res = {ticker: {} for ticker in tickers}
+    for ticker in tickers:
+        
+        # stock stats
+        stock = yf.Ticker(ticker)
+        info = res[ticker]
+        price = stock.history(period="1d")["Close"].iloc[-1]
+
+        # eps / pe calculation
+        eps, pe = stock.info.get("trailingEps", 'N/A'), stock.info.get("trailingPE", 'N/A')
+        if eps != 'N/A' and pe == 'N/A':
+            pe = price / eps
+        elif pe != 'N/A' and eps == 'N/A':
+            eps = price / pe
+
+        info['p/e'] = pe
+        info['volBeta'] = stock.info.get("beta", 'N/A')
+        info['yield'] = stock.info.get("dividendYield") if stock.info.get("dividendYield") is not None else 'N/A'
+        info['eps'] = eps
+        info['52w'] = f'{stock.info.get("fiftyTwoWeekLow", 'N/A')} - {stock.info.get("fiftyTwoWeekHigh", 'N/A')}'
+
+    # switching to market benchmark (spy)
+    spy = yf.Ticker("SPY")
+    price = spy.history(period="1d")["Close"].iloc[-1]
+    
+    # market averages
+    # compute eps / pe
+    eps = spy.info.get("trailingEps", 'N/A')
+    pe = spy.info.get("trailingPE", 'N/A')
+    if eps != 'N/A' and pe == 'N/A':
+        pe = price / eps
+    elif pe != 'N/A' and eps == 'N/A':
+        eps = price / pe
+    res['average'] = {
+        'p/e': pe,
+        'volBeta': spy.info.get("beta", 1.0),
+        'yield': spy.info.get("dividendYield") if spy.info.get("dividendYield") is not None else 'N/A',
+        'eps': eps,
+        '52w': f'{spy.info.get("fiftyTwoWeekLow", 'N/A')} - {spy.info.get("fiftyTwoWeekHigh", 'N/A')}'
+    }
+
+    # market predictions (expectations)
+    eps = spy.info.get("forwardEps", 'N/A')
+    pe = spy.info.get("forwardPE", 'N/A')
+
+    if eps != 'N/A' and pe == 'N/A':
+        pe = price / eps
+    elif pe != 'N/A' and eps == 'N/A':
+        eps = price / pe
+
+    res['expectation'] = {
+        'p/e': pe,
+        'volBeta': 1.0,
+        'yield': spy.info.get("trailingAnnualDividendYield") * 100 if spy.info.get("trailingAnnualDividendYield") is not None else 'N/A',
+        'eps': eps,
+        '52w': res['average']['52w']
+    }
+    return res
+
 def runScripts(data: pd.DataFrame) -> dict:
     """link between service and scripts. returns a dict of stat: val pairs"""
     res = {}
@@ -84,10 +147,15 @@ def yfinanceCall():
 
         # script results is a dict of our .. script results
         scriptResults = runScripts(data)
-        return scriptResults, 200
+        analysisResults = doAnalysis(tickers)
+        return {
+            'graphs': scriptResults,
+            'stats': analysisResults
+        }, 200
     
     # if an error occurred, likely yf is down
     except Exception as e:
+        print('exception occurred')
         print(e)
         return jsonify({
             "success": False, 
@@ -95,4 +163,4 @@ def yfinanceCall():
             }), 500
     
 if __name__ == "__main__":
-    app.run(debug=True, port=4000)
+    app.run(port=4000)

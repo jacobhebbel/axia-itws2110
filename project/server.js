@@ -58,7 +58,7 @@ app.get("/api/data", async (req, res) => {
         const { data } = await axios.get(`${URL_FLASK}/data?${query.toString()}`, {
             'timeout': 500000
         });
-
+        console.log(data);
         return res.status(200).json(data);
     
     // timeout, error with response, or error with no response 
