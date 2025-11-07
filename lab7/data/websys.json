@@ -1,0 +1,81 @@
+{
+    "Websys_course": {
+
+        "Lectures": {
+            "Lecture 1": {
+                "Title": "Welcome Lecture",
+                "Description": ""
+            },
+            "Lecture 2": {
+                "Title": "The Basics",
+                "Description": ""
+            },
+            "Lecture 3": {
+                "Title": "CSS Part 1",
+                "Description": ""
+            },
+            "Lecture 4": {
+                "Title": "CSS Part 2",
+                "Description": ""
+            },
+            "Lecture 5": {
+                "Title": "JavaScript",
+                "Description": ""
+            },
+            "Lecture 6": {
+                "Title": "AJAX and JSON",
+                "Description": ""
+            },
+            "Lecture 7": {
+                "Title": "APIs",
+                "Description": ""
+            },
+            "Lecture 8": {
+                "Title": "Frontend Optimization",
+                "Description": ""
+            },
+            "Lecture 9": {
+                "Title": "PHP Functions, Objects, Classes",
+                "Description": ""
+            },
+            "Lecture 10": {
+                "Title": "PHP Interfaces, Abstract Classes, Polymorphism",
+                "Description": ""
+            },
+            "Lecture 11": {
+                "Title": "Authentication and Authorization",
+                "Description": ""
+            }
+            
+        },
+
+        "Labs": {
+            "Lab 1": {
+                "Title": "Group Portfolio",
+                "Description": ""
+            },
+            "Lab 2": {
+                "Title": "US Constitution Day",
+                "Description": ""
+            },
+            "Lab 3": {
+                "Title": "JavaScript, AJAX, JSON, using APIs",
+                "Description": ""
+            },
+            "Lab 4": {
+                "Title": "AI",
+                "Description": ""
+            },
+            "Lab 5": {
+                "Title": "Introduction to Bloomberg Terminal",
+                "Description": ""
+            },
+            "Lab 6": {
+                "Title": "PHP, OOP and Input Handling",
+                "Description": ""
+            }
+            
+        }
+
+    }
+}
