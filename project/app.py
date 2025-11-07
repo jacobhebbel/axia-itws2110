@@ -17,43 +17,47 @@ def doAnalysis(tickers: list) -> dict:
         stock = yf.Ticker(ticker)
         info = res[ticker]
         price = stock.history(period="1d")["Close"].iloc[-1]
+        stock = stock.info
 
         # eps / pe calculation
-        eps, pe = stock.info.get("trailingEps", 'N/A'), stock.info.get("trailingPE", 'N/A')
+        eps, pe = stock.get("trailingEps", 'N/A'), stock.get("trailingPE", 'N/A')
         if eps != 'N/A' and pe == 'N/A':
             pe = price / eps
         elif pe != 'N/A' and eps == 'N/A':
             eps = price / pe
 
-        info['p/e'] = pe
-        info['volBeta'] = stock.info.get("beta", 'N/A')
-        info['yield'] = stock.info.get("dividendYield") if stock.info.get("dividendYield") is not None else 'N/A'
-        info['eps'] = eps
-        info['52w'] = f'{stock.info.get("fiftyTwoWeekLow", 'N/A')} - {stock.info.get("fiftyTwoWeekHigh", 'N/A')}'
+        info['PERatio'] = pe
+        info['Beta'] = stock.get("beta", 'N/A')
+        info['DividendYield'] = stock.get("dividendYield") if stock.get("dividendYield") is not None else 'N/A'
+        info['EPS'] = eps
+        info['52WeekHigh'] = stock.get("fiftyTwoWeekHigh", 'N/A')
+        info['52WeekLow'] = stock.get("fiftyTwoWeekLow", 'N/A')
 
     # switching to market benchmark (spy)
     spy = yf.Ticker("SPY")
     price = spy.history(period="1d")["Close"].iloc[-1]
+    spy = spy.info
     
     # market averages
     # compute eps / pe
-    eps = spy.info.get("trailingEps", 'N/A')
-    pe = spy.info.get("trailingPE", 'N/A')
+    eps = spy.get("trailingEps", 'N/A')
+    pe = spy.get("trailingPE", 'N/A')
     if eps != 'N/A' and pe == 'N/A':
         pe = price / eps
     elif pe != 'N/A' and eps == 'N/A':
         eps = price / pe
     res['average'] = {
-        'p/e': pe,
-        'volBeta': spy.info.get("beta", 1.0),
-        'yield': spy.info.get("dividendYield") if spy.info.get("dividendYield") is not None else 'N/A',
-        'eps': eps,
-        '52w': f'{spy.info.get("fiftyTwoWeekLow", 'N/A')} - {spy.info.get("fiftyTwoWeekHigh", 'N/A')}'
+        'PERatio': pe,
+        'Beta': spy.get("beta", 1.0),
+        'DividendYield': spy.get("dividendYield") if spy.get("dividendYield") is not None else 'N/A',
+        'EPS': eps,
+        '52WeekHigh': spy.get("fiftyTwoWeekHigh", 'N/A'),
+        '52WeekLow': spy.get("fiftyTwoWeekLow", 'N/A')
     }
 
     # market predictions (expectations)
-    eps = spy.info.get("forwardEps", 'N/A')
-    pe = spy.info.get("forwardPE", 'N/A')
+    eps = spy.get("forwardEps", 'N/A')
+    pe = spy.get("forwardPE", 'N/A')
 
     if eps != 'N/A' and pe == 'N/A':
         pe = price / eps
@@ -61,12 +65,17 @@ def doAnalysis(tickers: list) -> dict:
         eps = price / pe
 
     res['expectation'] = {
-        'p/e': pe,
-        'volBeta': 1.0,
-        'yield': spy.info.get("trailingAnnualDividendYield") * 100 if spy.info.get("trailingAnnualDividendYield") is not None else 'N/A',
-        'eps': eps,
-        '52w': res['average']['52w']
+        'PERatio': pe,
+        'Beta': 1.0,
+        'DividendYield': spy.get("trailingAnnualDividendYield") * 100 if spy.get("trailingAnnualDividendYield") is not None else 'N/A',
+        'EPS': eps,
+        '52WeekHigh': 'N/A',
+        '52WeekLow': 'N/A'
     }
+
+    for category, metrics in res.items():
+        for metric, val in metrics.items():
+            res[category][metric] = round(val, 2) if val != 'N/A' else 'N/A'
     return res
 
 def runScripts(data: pd.DataFrame) -> dict:

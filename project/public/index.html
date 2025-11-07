@@ -97,9 +97,7 @@
 
     <script>
         //API stuff here, i highly recommend finding something thats not alpha vantage due to their limit on number of calls her day (its bad, shouldnt use for both data table and ticker tape)
-        const ALPHA_VANTAGE_BASE_URL = 'https://www.alphavantage.co/query';
-        const ALPHA_VANTAGE_API_KEY = 'DHGUBI4YDAV44GOY'; 
-        const YAHOO_FINANCE_BASE_URL = 'https://query1.finance.yahoo.com/v8/finance/chart';
+        const SERVER_BASE_URL = 'http://localhost:3000/api';
         
         //defining the market hours as weekdays from 9:30 to 4 PM 
         const MARKET_OPEN_HOUR = 9;
@@ -211,18 +209,26 @@
         //portion for fetching the stock data from Alpha Vantage, mostly based on their documentation 
         async function fetchStockData(symbol) {
             try {
+                console.log(`fetching data for stock ${symbol}`);
                 metricsLoader.style.display = 'block';
                 metricsTable.style.opacity = '0.5';
                 
-                const url = `${ALPHA_VANTAGE_BASE_URL}?function=OVERVIEW&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`;
+                const query = new URLSearchParams({
+                    'tickers': symbol,
+                    'period': '10y',
+                    'interval': '1d'
+                });
+
+                const url = `${SERVER_BASE_URL}/data?${query}`;
                 const response = await fetch(url);
                 
                 if (!response.ok) {
+                    console.log(`call for ${symbol} was not successful`);
                     throw new Error(`API error: ${response.status}`);
                 }
                 
                 const data = await response.json();
-                
+                console.log(data);
                 if (data.Note || data.Information) {
                     throw new Error('API rate limit exceeded. Please try again later.');
                 }
@@ -231,38 +237,10 @@
             } catch (error) {
                 console.error('Error fetching stock data:', error);
                 //attempts to fall back to Yahoo Finance if Alpha Vantage fails, i think this part doesnt work and it falls back to dummy data
-                return await fetchStockDataFromYahoo(symbol);
+                return await generateMockData(symbol);
             } finally {
                 metricsLoader.style.display = 'none';
                 metricsTable.style.opacity = '1';
-            }
-        }
-        
-        //portion for the fallback to to Yahoo Finance API
-        async function fetchStockDataFromYahoo(symbol) {
-            try {
-                const url = `${YAHOO_FINANCE_BASE_URL}/${symbol}`;
-                const response = await fetch(url);
-                
-                if (!response.ok) {
-                    throw new Error(`Yahoo Finance API error: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                const result = data.chart.result[0];
-                
-                //attempts to format the data to match Alpha Vantage structure, might be easier to entirely use Yahoo Finance here and do two APIs 
-                return {
-                    Symbol: symbol,
-                    Name: result.meta.symbol,
-                    PERatio: result.meta.trailingPE || 'N/A',
-                    DividendYield: result.meta.trailingAnnualDividendYield ? 
-                        (result.meta.trailingAnnualDividendYield * 100).toFixed(2) + '%' : 'N/A'
-                };
-            } catch (error) {
-                console.error('Error fetching from Yahoo Finance:', error);
-                //final fallback option where it displays dummy data because both failed 
-                return generateMockData(symbol);
             }
         }
         
@@ -337,7 +315,7 @@
         //portion for updating the stock metric data table 
         async function updateStockMetrics() {
             const symbol = document.getElementById('stock-select').value;
-            const data = await fetchStockData(symbol);
+            const data = (await fetchStockData(symbol))['stats'][symbol];
             
             const tableBody = metricsTable.querySelector('tbody');
             tableBody.innerHTML = `
