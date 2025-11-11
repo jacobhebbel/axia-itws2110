@@ -4,47 +4,47 @@
         "Lectures": {
             "Lecture 1": {
                 "Title": "Welcome Lecture",
-                "Description": ""
+                "Description": "Went over course objectives and learning goals, talked about the role of web systems in our lives, and outlined the course timeline."
             },
             "Lecture 2": {
                 "Title": "The Basics",
-                "Description": ""
+                "Description": "Review of web protocols and html. Talked about the structure of a web-facing application."
             },
             "Lecture 3": {
                 "Title": "CSS Part 1",
-                "Description": ""
+                "Description": "Learned basics of CSS, such as using selectors for styling html."
             },
             "Lecture 4": {
                 "Title": "CSS Part 2",
-                "Description": ""
+                "Description": "More advanced overview of CSS, discussing hierarchy of selectors and stylings like animations"
             },
             "Lecture 5": {
                 "Title": "JavaScript",
-                "Description": ""
+                "Description": "Discussed the role of JS in designing impactful applications. Went over syntax and nuances (arrow functions, IIFEs)"
             },
             "Lecture 6": {
                 "Title": "AJAX and JSON",
-                "Description": ""
+                "Description": "AJAX was introduced to allow dynamic content without reloading the page, and JSON as a structured data format that integrates easily into Javascript"
             },
             "Lecture 7": {
                 "Title": "APIs",
-                "Description": ""
+                "Description": "APIs enable developers to programmatically interact with other applications for seamless integration into one's own application"
             },
             "Lecture 8": {
                 "Title": "Frontend Optimization",
-                "Description": ""
+                "Description": "Discussed low-level structure of the DOM, style trees, CSS vs JS runtimes, selector pruning, and backend design patterns"
             },
             "Lecture 9": {
                 "Title": "PHP Functions, Objects, Classes",
-                "Description": ""
+                "Description": "Stateless applications often need a backend, a server holding persistent resources. PHP was introduced to solve this issue, and a discussion on PHP development ensued"
             },
             "Lecture 10": {
                 "Title": "PHP Interfaces, Abstract Classes, Polymorphism",
-                "Description": ""
+                "Description": "More advanced PHP topics"
             },
             "Lecture 11": {
                 "Title": "Authentication and Authorization",
-                "Description": ""
+                "Description": "How to enforce web security for your applications. Various granularities of security were introduced for the purpose of dynamically assigning resource access to persons associated with an organization"
             }
             
         },
@@ -52,27 +52,27 @@
         "Labs": {
             "Lab 1": {
                 "Title": "Group Portfolio",
-                "Description": ""
+                "Description": "A website showcasing a group's resumes and backgrounds, united by a common styling and structure"
             },
             "Lab 2": {
                 "Title": "US Constitution Day",
-                "Description": ""
+                "Description": "Built an application for explaining the historical and current significance of the US Constitution"
             },
             "Lab 3": {
                 "Title": "JavaScript, AJAX, JSON, using APIs",
-                "Description": ""
+                "Description": "Built a dashboard integrating 2 APIs that utilized dynamic content updates and asynchronous request behavior"
             },
             "Lab 4": {
                 "Title": "AI",
-                "Description": ""
+                "Description": "Recreated lab 3 using only prompt engineering"
             },
             "Lab 5": {
                 "Title": "Introduction to Bloomberg Terminal",
-                "Description": ""
+                "Description": "Observed an effective web system in action, capable of immediate data queries and visualizations while integrating with current events"
             },
             "Lab 6": {
                 "Title": "PHP, OOP and Input Handling",
-                "Description": ""
+                "Description": "Learned how to develop an application backend and design DRY PHP objects"
             }
             
         }
