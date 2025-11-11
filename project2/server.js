@@ -2,7 +2,7 @@
 require('dotenv').config();
 
 /* Import Functions */
-// const { getFactset, getCapital, reorganizeData } = require('./util.js');
+const { factsetDriver } = require('./apis/factset');
 
 /* Import Packages */
 const express = require('express');
@@ -67,9 +67,9 @@ server.get('/api/valuation/:ticker', async (req, res) => {
 
     try {
         /* Call APIs */
-        // const factsetData = await getFactset(stock);
+        const factsetData = await factsetDriver(stock);
         return res.status(200).json({
-            'msg': 'endpoint not implemented'
+            'factset': factsetData
         });
     }
     
