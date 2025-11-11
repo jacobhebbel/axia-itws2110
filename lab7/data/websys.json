@@ -56,27 +56,27 @@
         "Labs": {
             "Lab 1": {
                 "Title": "Group Portfolio",
-                "Description": ""
+                "Description": "A website showcasing a group's resumes and backgrounds, united by a common styling and structure"
             },
             "Lab 2": {
                 "Title": "US Constitution Day",
-                "Description": ""
+                "Description": "Built an application for explaining the historical and current significance of the US Constitution"
             },
             "Lab 3": {
                 "Title": "JavaScript, AJAX, JSON, using APIs",
-                "Description": ""
+                "Description": "Built a dashboard integrating 2 APIs that utilized dynamic content updates and asynchronous request behavior"
             },
             "Lab 4": {
                 "Title": "AI",
-                "Description": ""
+                "Description": "Recreated lab 3 using only prompt engineering"
             },
             "Lab 5": {
                 "Title": "Introduction to Bloomberg Terminal",
-                "Description": ""
+                "Description": "Observed an effective web system in action, capable of immediate data queries and visualizations while integrating with current events"
             },
             "Lab 6": {
                 "Title": "PHP, OOP and Input Handling",
-                "Description": ""
+                "Description": "Learned how to develop an application backend and design DRY PHP objects"
             }
             
         }
