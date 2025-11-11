@@ -16,16 +16,16 @@ if (isset($_GET['reset'])) {
 
 if (isset($_GET['create'])) {
 
-    $alreadyExists = $conn->query("SELECT 1 FROM Lectures");
+    $alreadyExists = $conn->query("SHOW TABLES LIKE 'Lectures'");
 
     if ($alreadyExists && $alreadyExists->num_rows > 0) {
         echo "<p>Table already exists. Delete before trying again.</p>";
     } else {
-        $sql = "SELECT json_objects from courses where title like '%WEB SYSTEMS DEVELOPMENT%'";
+        $sql = "SELECT course_json from courses where title like '%WEB SYSTEMS DEVELOPMENT%'";
         $result = $conn->query($sql);
 
         $row = $result->fetch_assoc();
-        $string = $row['json_objects'];
+        $string = $row['course_json'];
 
         $data = json_decode($string, true);
 
