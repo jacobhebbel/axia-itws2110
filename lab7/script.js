@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function loadJSON() {
         try {
-            const response = await fetch("part5.php"); //NOTE: Swap to part5.php once we get PHP/SQL portions done
+            const response = await fetch("conn.php"); //NOTE: Swap to part5.php once we get PHP/SQL portions done
             const data = await response.json();
             displayNavigation(data.Websys_course);
         } catch (err) {
