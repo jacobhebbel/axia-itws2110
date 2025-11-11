@@ -121,3 +121,29 @@ main {
     border-radius: 12px;
     min-height: 400px; 
 }
+
+button {
+    background-color: #ff0000;
+    color: #000;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: "Share Tech Mono", monospace;
+    font-weight: bold;
+    transition: all 0.2s ease-in-out;
+    margin: 10px auto;
+    display: block;
+    min-width: 150px;
+}
+
+.message {
+    background: rgba(255, 0, 0, 0.1);
+    border: 1px solid #ff0000;
+    color: #ff0000;
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin: 15px auto;
+    width: fit-content;
+    font-family: "Share Tech Mono", monospace;
+}
