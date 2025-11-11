@@ -6,6 +6,8 @@ Lab 7: The purpose of this lab was to practice PHP and SQL by creating a webpage
 
 For individual contributions and blockers, please see individual repository READMEs. 
 
+Image Sources:
+- https://wallpapers.com/background/spooky-background-6san6fli9tt43iqv.html
 
 SQL Queries: 
 
