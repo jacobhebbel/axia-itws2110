@@ -1,0 +1,5 @@
+Matthew Lifrieri
+
+My part: I was in charge of completing part 3, which was writing up the JSON file that would contain the information about the WebSys course. The file, websys.json, contains the top level object "Websys_course," and subsequent objects "Lectures" and "Labs" within it. Lectures contains objects for lectures 1-12 with properties for "Title" and "Description." Labs has a similar structure with objects for labs 1-6 with the same properties. Creating the JSON file in this way allowed for easy importing of this data to our MySQL database, which is handled in part5.php.
+
+This lab went smoothly for me, as my part was more information/data heavy rather than code/script heavy. I just had to review every class from this semester and describe what we covered/accomplished. My biggest blocker (which isn't that much of a blocker at all) was just having to go back through every lecture slide and reread all of what was covered. That was the most time consuming, but went well overall. 
