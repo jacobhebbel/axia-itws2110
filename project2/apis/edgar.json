@@ -1,0 +1,15 @@
+[
+    {
+        "method": "GET",
+        "endpoint": "/companyfacts",
+        "alias": "finances",
+        "values": {
+            "TaxProvision/TaxExpense": ["IncomeTaxExpenseBenefit"],
+            "InterestIncome": ["InterestIncome"],
+            "Stock-basedCompensation": ["ShareBasedCompensation"],
+            "Depreciation/Amortization/Impairment": ["DepreciationDepletionAndAmortization"],
+            "Debt": ["Liabilities", "LongTermDebt", "DebtCurrent"],
+            "Minority/Non-controllingInterest": ["MinorityInterest", "NoncontrollingInterestInConsolidatedEquity"]
+        }
+    }
+]
