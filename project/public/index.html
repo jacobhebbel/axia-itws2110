@@ -9,23 +9,23 @@
 </head>
 <body>
     <header>
-        <img src="../lab1/images/logo.png" alt="Axia Logo" class="logo">
-        <img src="../lab1/images/name.png" alt="Axia - Smart Finance, Simple Solutions" class="title-img">
+        <img src="./images/logo.png" alt="Axia Logo" class="logo">
+        <img src="./images/name.png" alt="Axia - Smart Finance, Simple Solutions" class="title-img">
     </header>
 
-    <div class="ticker-container">
+    <!-- <div class="ticker-container">
         <div class="ticker" id="live-ticker">
-            <!-- all of the ticker tape stuff is poplated by javascript-- need to find more efficient alternative here or get rid of it -->
+             all of the ticker tape stuff is poplated by javascript-- need to find more efficient alternative here or get rid of it
         </div>
-    </div>
+    </div>  -->
 
     <!-- for the data table with the P/E, volitility, yield, EPS, and price range-->
     <div class="dashboard">
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title">Stock Metrics Comparison</h2>
+                <h2 class="card-title" id="card-title-1">Stock Metrics Comparison</h2>
                 <div class="stock-selector">
-                    <select class="stock-select" id="stock-select">
+                    <select class="stock-select" id="stock-select-1">
                         <option value="AAPL">Apple (AAPL)</option>
                         <option value="MSFT">Microsoft (MSFT)</option>
                         <option value="GOOGL">Alphabet (GOOGL)</option>
@@ -33,22 +33,38 @@
                         <option value="TSLA">Tesla (TSLA)</option>
                         <option value="AVGO">Broadcom (AVGO)</option>
                     </select>
+                    <select class="stock-select" id="display-select-1">
+                        <option value="data-table">Data Table</option>
+                        <option value="efficient-frontier">Efficient Frontier</option>
+                        <option value="total-risk">Total Risk Contribution</option>
+                        <option value="mctr">MCTR Pie Chart</option>
+                    </select>
                 </div>
             </div>
             <div class="loader" id="metrics-loader"></div>
-            <table class="stats-table" id="metrics-table">
-                <thead>
-                    <tr>
-                        <th>Metric</th>
-                        <th>Current</th>
-                        <th>Market Expectation</th>
-                        <th>Market Average</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- data here is pulled from javascript below to populate with market data -->
-                </tbody>
-            </table>
+            
+            <!-- Data Table (default) -->
+            <div id="data-table-container">
+                <table class="stats-table" id="metrics-table">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Current</th>
+                            <th>Market Expectation</th>
+                            <th>Market Average</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- data populated by javascript -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Chart Containers (hidden by default) -->
+            <div class="chart-container" id="chart-container-1" style="display: none;">
+                <canvas id="chart-1"></canvas>
+            </div>
+            
             <div class="status-indicator" id="data-status">
                 <span class="status-dot status-live"></span>
                 <span>Live Market Data</span>
@@ -58,19 +74,55 @@
         <!-- everything here is for the efficient frontier graph that clark wanted us to add -->
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title">CRSP Efficient Frontier</h2>
+                <h2 class="card-title" id="card-title-2">CRSP Efficient Frontier</h2>
                 <div class="stock-selector">
+                    <!-- Stock selector (hidden by default for efficient frontier) -->
+                    <select class="stock-select" id="stock-select-2" style="display: none;">
+                        <option value="AAPL">Apple (AAPL)</option>
+                        <option value="MSFT">Microsoft (MSFT)</option>
+                        <option value="GOOGL">Alphabet (GOOGL)</option>
+                        <option value="AMZN">Amazon (AMZN)</option>
+                        <option value="TSLA">Tesla (TSLA)</option>
+                        <option value="AVGO">Broadcom (AVGO)</option>
+                    </select>
+                    <!-- Cap selector (shown by default for efficient frontier) -->
                     <select class="stock-select" id="frontier-select">
                         <option value="large_cap">Large Cap Stocks</option>
                         <option value="mid_cap">Mid Cap Stocks</option>
                         <option value="small_cap">Small Cap Stocks</option>
                     </select>
+                    <select class="stock-select" id="display-select-2">
+                        <option value="efficient-frontier">Efficient Frontier</option>
+                        <option value="data-table">Data Table</option>
+                        <option value="total-risk">Total Risk Contribution</option>
+                        <option value="mctr">MCTR Pie Chart</option>
+                    </select>
                 </div>
             </div>
-            <div class="chart-container">
-                <canvas id="frontier-chart"></canvas>
+            
+            <!-- Chart Containers -->
+            <div class="chart-container" id="chart-container-2">
+                <canvas id="chart-2"></canvas>
             </div>
-            <div class="frontier-legend">
+            
+            <!-- Data Table (hidden by default) -->
+            <div id="data-table-container-2" style="display: none;">
+                <table class="stats-table" id="metrics-table-2">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Current</th>
+                            <th>Market Expectation</th>
+                            <th>Market Average</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- data populated by javascript -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="frontier-legend" id="frontier-legend">
                 <div class="legend-item">
                     <div class="legend-color" style="background-color: #edd39a;"></div>
                     <span>Efficient Frontier</span>
@@ -96,23 +148,26 @@
     </div>
 
     <script>
-        //API stuff here, i highly recommend finding something thats not alpha vantage due to their limit on number of calls her day (its bad, shouldnt use for both data table and ticker tape)
+        // Chart instances
+        let chart1 = null;
+        let chart2 = null;
+
+        // Your original API configuration and functions
         const ALPHA_VANTAGE_BASE_URL = 'https://www.alphavantage.co/query';
         const ALPHA_VANTAGE_API_KEY = 'DHGUBI4YDAV44GOY'; 
         const YAHOO_FINANCE_BASE_URL = 'https://query1.finance.yahoo.com/v8/finance/chart';
-        
-        //defining the market hours as weekdays from 9:30 to 4 PM 
+
+        // Market hours configuration
         const MARKET_OPEN_HOUR = 9;
         const MARKET_CLOSE_HOUR = 16;
         const MARKET_DAYS = [1, 2, 3, 4, 5]; 
-        
+
         const metricsLoader = document.getElementById('metrics-loader');
         const metricsTable = document.getElementById('metrics-table');
         const liveTicker = document.getElementById('live-ticker');
         const dataStatus = document.getElementById('data-status');
-        
-        //function to see if the market is open and if its a trading day/within the right hours to trade
-        //note: only the ticker tape should rely on this function and the data table only needs to be updated after market close each day
+
+        // Function to see if market is open
         function isMarketOpen() {
             const now = new Date();
             const utcHours = now.getUTCHours();
@@ -122,8 +177,8 @@
             return (estHours > MARKET_OPEN_HOUR || (estHours === MARKET_OPEN_HOUR && now.getUTCMinutes() >= 30)) && 
                    estHours < MARKET_CLOSE_HOUR;
         }
-        
-        //silly status things that lets the code know if the market is live or if its previous close data
+
+        // Status indicator function
         function updateDataStatus() {
             const isOpen = isMarketOpen();
             const statusDot = dataStatus.querySelector('.status-dot');
@@ -137,16 +192,14 @@
                 statusText.textContent = 'Delayed Data (Previous Close)';
             }
         }
-        
-        //stuff for generating the efficient frontier, currently based on dummy data-- need to swap to actual CRSP data
-        const frontierCtx = document.getElementById('frontier-chart').getContext('2d');
+
+        // Your original efficient frontier data generation
         function generateEfficientFrontierData(type) {
             const frontierData = [];
             const individualAssets = [];
             const capitalMarketLine = [];
             const equalWeightLine = [];
             
-            //data varies based on selection 
             let baseReturn, baseRisk, riskFreeRate;
             switch(type) {
                 case 'large_cap':
@@ -170,14 +223,12 @@
                     riskFreeRate = 0.02;
             }
             
-            //part for generating the efficient frontier curve 
             for (let i = 0; i <= 20; i++) {
                 const risk = baseRisk + (i * 0.01);
                 const returnVal = baseReturn + 0.4 * Math.pow(risk - baseRisk, 0.7);
                 frontierData.push({x: risk, y: returnVal});
             }
             
-            //part for generating the capital market line from risk-free rate to optimal portfolio
             const optimalRisk = baseRisk + 0.08;
             const optimalReturn = baseReturn + 0.06;
             
@@ -188,27 +239,24 @@
                 capitalMarketLine.push({x: risk, y: returnVal});
             }
             
-            //part for the equal weight line
             const equalWeightReturn = baseReturn + 0.02;
             for (let i = 0; i <= 20; i++) {
                 const risk = baseRisk + (i * 0.01);
                 equalWeightLine.push({x: risk, y: equalWeightReturn});
             }
             
-            //randomly generates individual assets random around the frontier-- need assets specific to portfolio integrated here
             for (let i = 0; i < 15; i++) {
                 const risk = baseRisk + (Math.random() * 0.15);
                 const returnVal = baseReturn + (Math.random() * 0.1) - 0.05;
                 individualAssets.push({x: risk, y: returnVal});
             }
             
-            //part for the green dot which is the optimal portfolio 
             const optimalPortfolio = {x: optimalRisk, y: optimalReturn};
             
             return { frontierData, individualAssets, optimalPortfolio, capitalMarketLine, equalWeightLine, riskFreeRate };
         }
-        
-        //portion for fetching the stock data from Alpha Vantage, mostly based on their documentation 
+
+        // Your original stock data fetching functions
         async function fetchStockData(symbol) {
             try {
                 metricsLoader.style.display = 'block';
@@ -230,15 +278,13 @@
                 return data;
             } catch (error) {
                 console.error('Error fetching stock data:', error);
-                //attempts to fall back to Yahoo Finance if Alpha Vantage fails, i think this part doesnt work and it falls back to dummy data
                 return await fetchStockDataFromYahoo(symbol);
             } finally {
                 metricsLoader.style.display = 'none';
                 metricsTable.style.opacity = '1';
             }
         }
-        
-        //portion for the fallback to to Yahoo Finance API
+
         async function fetchStockDataFromYahoo(symbol) {
             try {
                 const url = `${YAHOO_FINANCE_BASE_URL}/${symbol}`;
@@ -251,7 +297,6 @@
                 const data = await response.json();
                 const result = data.chart.result[0];
                 
-                //attempts to format the data to match Alpha Vantage structure, might be easier to entirely use Yahoo Finance here and do two APIs 
                 return {
                     Symbol: symbol,
                     Name: result.meta.symbol,
@@ -261,53 +306,51 @@
                 };
             } catch (error) {
                 console.error('Error fetching from Yahoo Finance:', error);
-                //final fallback option where it displays dummy data because both failed 
                 return generateMockData(symbol);
             }
         }
-        
-        //this is the fallback mock data when everything sucks, i think it uses this right now when i usee too many Alpha Vantage calls
+
         function generateMockData(symbol) {
             const mockData = {
                 AAPL: {
                     Symbol: 'AAPL',
                     Name: 'Apple Inc.',
-                    PERatio: '28.5',
-                    DividendYield: '0.55%',
-                    EPS: '6.05',
-                    Beta: '1.2',
-                    '52WeekHigh': '182.94',
-                    '52WeekLow': '124.17'
+                    PERatio: '39.91',
+                    DividendYield: '0.40%',
+                    EPS: '6.59',
+                    Beta: '1.09',
+                    '52WeekHigh': '169.21',
+                    '52WeekLow': '265.29'
                 },
                 MSFT: {
                     Symbol: 'MSFT',
                     Name: 'Microsoft Corporation',
-                    PERatio: '32.4',
-                    DividendYield: '0.76%',
-                    EPS: '9.65',
-                    Beta: '0.9',
-                    '52WeekHigh': '349.67',
-                    '52WeekLow': '242.51'
+                    PERatio: '38.45',
+                    DividendYield: '0.70%',
+                    EPS: '13.64',
+                    Beta: '1.02',
+                    '52WeekHigh': '555.45',
+                    '52WeekLow': '344.79'
                 },
                 GOOGL: {
                     Symbol: 'GOOGL',
                     Name: 'Alphabet Inc.',
-                    PERatio: '24.8',
-                    DividendYield: 'N/A',
-                    EPS: '5.21',
-                    Beta: '1.05',
-                    '52WeekHigh': '153.78',
-                    '52WeekLow': '97.71'
+                    PERatio: '27.88',
+                    DividendYield: '0.33%',
+                    EPS: '9.39',
+                    Beta: '1.00',
+                    '52WeekHigh': '262.51',
+                    '52WeekLow': '142.66'
                 },
                 AMZN: {
                     Symbol: 'AMZN',
                     Name: 'Amazon.com Inc.',
-                    PERatio: '62.1',
+                    PERatio: '34.25',
                     DividendYield: 'N/A',
-                    EPS: '2.9',
-                    Beta: '1.15',
-                    '52WeekHigh': '145.86',
-                    '52WeekLow': '101.15'
+                    EPS: '6.57',
+                    Beta: '1.28',
+                    '52WeekHigh': '242.52',
+                    '52WeekLow': '161.38'
                 },
                 TSLA: {
                     Symbol: 'TSLA',
@@ -322,52 +365,54 @@
                 AVGO: {
                     Symbol: 'AVGO',
                     Name: 'Broadcom Inc.',
-                    PERatio: '88.45',
-                    DividendYield: '0.68%',
-                    EPS: '3.9',
-                    Beta: '1.17',
-                    '52WeekHigh': '374.23',
-                    '52WeekLow': '138.10'
+                    PERatio: '91.45',
+                    DividendYield: 'N/A',
+                    EPS: '1.44',
+                    Beta: '2.09',
+                    '52WeekHigh': '488.54',
+                    '52WeekLow': '214.25'
                 }
             };
             
             return mockData[symbol] || mockData.AAPL;
         }
-        
-        //portion for updating the stock metric data table 
+
+        // Your original stock metrics update function - FIXED
         async function updateStockMetrics() {
-            const symbol = document.getElementById('stock-select').value;
+            const symbol = document.getElementById('stock-select-1').value;
             const data = await fetchStockData(symbol);
             
             const tableBody = metricsTable.querySelector('tbody');
+            
+            // Format the data table exactly as in your original code
             tableBody.innerHTML = `
                 <tr>
                     <td>P/E Ratio</td>
-                    <td class="${data.PERatio < 25 ? 'good-value' : 'bad-value'}">${data.PERatio || 'N/A'}</td>
-                    <td>${(parseFloat(data.PERatio) + 2).toFixed(1) || 'N/A'}</td>
+                    <td class="${data.PERatio && parseFloat(data.PERatio) < 25 ? 'good-value' : 'bad-value'}">${data.PERatio || 'N/A'}</td>
+                    <td>${data.PERatio && !isNaN(parseFloat(data.PERatio)) ? (parseFloat(data.PERatio) + 2).toFixed(1) : 'N/A'}</td>
                     <td>22.1</td>
                 </tr>
                 <tr>
                     <td>Volatility (Beta)</td>
-                    <td class="${data.Beta < 1 ? 'good-value' : 'bad-value'}">${data.Beta || 'N/A'}</td>
-                    <td>${(parseFloat(data.Beta) - 0.1).toFixed(1) || 'N/A'}</td>
+                    <td class="${data.Beta && parseFloat(data.Beta) < 1 ? 'good-value' : 'bad-value'}">${data.Beta || 'N/A'}</td>
+                    <td>${data.Beta && !isNaN(parseFloat(data.Beta)) ? (parseFloat(data.Beta) - 0.1).toFixed(1) : 'N/A'}</td>
                     <td>1.0</td>
                 </tr>
                 <tr>
                     <td>Dividend Yield</td>
-                    <td class="${parseFloat(data.DividendYield) > 0.5 ? 'good-value' : 'bad-value'}">${data.DividendYield || 'N/A'}</td>
+                    <td class="${data.DividendYield && data.DividendYield !== 'N/A' && parseFloat(data.DividendYield) > 0.5 ? 'good-value' : 'bad-value'}">${data.DividendYield || 'N/A'}</td>
                     <td>${data.DividendYield || 'N/A'}</td>
                     <td>2.1%</td>
                 </tr>
                 <tr>
                     <td>EPS</td>
-                    <td class="${parseFloat(data.EPS) > 5 ? 'good-value' : 'bad-value'}">${data.EPS || 'N/A'}</td>
-                    <td>${(parseFloat(data.EPS) - 0.5).toFixed(2) || 'N/A'}</td>
+                    <td class="${data.EPS && parseFloat(data.EPS) > 5 ? 'good-value' : 'bad-value'}">${data.EPS || 'N/A'}</td>
+                    <td>${data.EPS && !isNaN(parseFloat(data.EPS)) ? (parseFloat(data.EPS) - 0.5).toFixed(2) : 'N/A'}</td>
                     <td>8.7</td>
                 </tr>
                 <tr>
                     <td>52W Range</td>
-                    <td class="${(parseFloat(data['52WeekHigh']) - parseFloat(data['52WeekLow'])) / parseFloat(data['52WeekLow']) < 0.5 ? 'good-value' : 'bad-value'}">
+                    <td class="${(data['52WeekHigh'] && data['52WeekLow'] && (parseFloat(data['52WeekHigh']) - parseFloat(data['52WeekLow'])) / parseFloat(data['52WeekLow']) < 0.5 ? 'good-value' : 'bad-value')}">
                         ${data['52WeekLow'] || 'N/A'} - ${data['52WeekHigh'] || 'N/A'}
                     </td>
                     <td>N/A</td>
@@ -375,294 +420,586 @@
                 </tr>
             `;
 
-            document.querySelectorAll('.card-title')[0].textContent = `${data.Name} Metrics`;
+            // Update the card title
+            document.getElementById('card-title-1').textContent = `${data.Name || symbol} Metrics`;
         }
-        
-        //fetches the real-time ticker data with fallback to previous close (it falls back to dummy data-- need to fix)
-        async function updateTickerData() {
-            const symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'NVDA', 'JPM', 'V', 'AVGO'];
-            const isOpen = isMarketOpen();
+
+        // Function to update card title based on selection
+        function updateCardTitle(displaySelectId, cardTitleId, defaultTitle) {
+            const displaySelect = document.getElementById(displaySelectId);
+            const cardTitle = document.getElementById(cardTitleId);
+            const selectedValue = displaySelect.value;
             
-            try {
-                let tickerHTML = '';
-                
-                for (const symbol of symbols) {
-                    try {
-                        //uses Alpha Vantage for real-time or previous close based on market hours
-                        const functionType = isOpen ? 'GLOBAL_QUOTE' : 'TIME_SERIES_DAILY';
-                        const url = `${ALPHA_VANTAGE_BASE_URL}?function=${functionType}&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`;
-                        
-                        const response = await fetch(url);
-                        
-                        if (response.ok) {
-                            const data = await response.json();
-                            
-                            let price, change, changePercent;
-                            
-                            if (isOpen) {
-                                //live data is needed to be fetched 
-                                const quote = data['Global Quote'];
-                                price = parseFloat(quote['05. price']).toFixed(2);
-                                change = parseFloat(quote['09. change']).toFixed(2);
-                                changePercent = parseFloat(quote['10. change percent'].replace('%', '')).toFixed(2);
-                            } else {
-                                //market closed, uses previous close data
-                                const lastRefreshed = data['Meta Data']['3. Last Refreshed'];
-                                const timeSeries = data['Time Series (Daily)'];
-                                const latestData = timeSeries[lastRefreshed];
-                                
-                                price = parseFloat(latestData['4. close']).toFixed(2);
-                                //for a previous close, change in price is 0 (might want it to be the previous day % instead?)
-                                const prevClose = parseFloat(latestData['4. close']); 
-                                change = 0;
-                                changePercent = 0;
-                            }
-                            
-                            const changeClass = change >= 0 ? 'positive' : 'negative';
-                            const changeSign = change >= 0 ? '+' : '';
-                            
-                            tickerHTML += `
-                                <div class="ticker-item">
-                                    <span class="ticker-symbol">${symbol}</span>
-                                    <span class="ticker-price">$${data.price.toFixed(2)}</span>
-                                    <span class="${changeClass}">${changeSign}${changeValue}%</span> // <-- 'changeValue' is in dollars, not percent!
-                                </div>
-                            `;
-                        } else {
-                            throw new Error('Alpha Vantage failed');
-                        }
-                    } catch (error) {
-                        //attempted to add extended hours capabilities which is on weekdays, need some closing val for sat/sun
-                        //note: this was never actually tested cause i always ran out of API calls and/or dont have the after hours data on my phone (i do have it, just didnt want to hunt it down because lazy)
-                        try {
-                            const url = `${YAHOO_FINANCE_BASE_URL}/${symbol}`;
-                            const response = await fetch(url);
-                            
-                            if (response.ok) {
-                                const data = await response.json();
-                                const result = data.chart.result[0];
-                                
-                                let price, change, changePercent;
-                                
-                                if (isOpen) {
-                                    price = result.meta.regularMarketPrice.toFixed(2);
-                                    change = (result.meta.regularMarketPrice - result.meta.previousClose).toFixed(2);
-                                    changePercent = ((change / result.meta.previousClose) * 100).toFixed(2);
-                                } else {
-                                    price = result.meta.previousClose.toFixed(2);
-                                    change = 0;
-                                    changePercent = 0;
-                                }
-                                
-                                const changeClass = change >= 0 ? 'positive' : 'negative';
-                                const changeSign = change >= 0 ? '+' : '';
-                                
-                                tickerHTML += `
-                                    <div class="ticker-item">
-                                        <span class="ticker-symbol">${symbol}</span>
-                                        <span class="ticker-price">$${price}</span>
-                                        <span class="${changeClass}">${changeSign}${changePercent}%</span>
-                                    </div>
-                                `;
-                            } else {
-                                throw new Error('Yahoo Finance failed');
-                            }
-                        } catch (yahooError) {
-                            //fallback to mock data when everything else fails (does this when all API calls are used)
-                            const mockPrices = {
-                                AAPL: { price: 0, change: 0 },
-                                MSFT: { price: 0, change: 0 },
-                                GOOGL: { price: 0, change: 0 },
-                                AMZN: { price: 0, change: 0 },
-                                TSLA: { price: 0, change: 0 },
-                                NVDA: { price: 0, change: 0 },
-                                JPM: { price: 0, change: 0 },
-                                V: { price: 0, change: 0 },
-                                AVGO: { price: 0, change: 0 }
-                            };
-                            
-                            const data = mockPrices[symbol] || mockPrices.AAPL;
-                            //market is closed, sets change to 0 for mock data
-                            const changeValue = isOpen ? data.change : 0;
-                            const changeClass = changeValue >= 0 ? 'positive' : 'negative';
-                            const changeSign = changeValue >= 0 ? '+' : '';
-                            
-                            tickerHTML += `
-                                <div class="ticker-item">
-                                    <span class="ticker-symbol">${symbol}</span>
-                                    <span class="ticker-price">$${data.price.toFixed(2)}</span>
-                                    <span class="${changeClass}">${changeSign}${changeValue}%</span>
-                                </div>
-                            `;
-                        }
-                    }
-                }
-                
-                liveTicker.innerHTML = tickerHTML;
-            } catch (error) {
-                console.error('Error updating ticker data:', error);
+            const titleMap = {
+                'data-table': 'Stock Metrics Comparison',
+                'efficient-frontier': 'CRSP Efficient Frontier',
+                'total-risk': 'Total Risk Contribution',
+                'mctr': 'Marginal Contribution to Risk'
+            };
+            
+            cardTitle.textContent = titleMap[selectedValue] || defaultTitle;
+        }
+
+        // Function to update dropdown visibility based on selection
+        function updateDropdownVisibility(displaySelectId, stockSelectId, frontierSelectId) {
+            const displaySelect = document.getElementById(displaySelectId);
+            const stockSelect = document.getElementById(stockSelectId);
+            const frontierSelect = document.getElementById(frontierSelectId);
+            
+            const selectedValue = displaySelect.value;
+            
+            if (selectedValue === 'efficient-frontier') {
+                // Show cap selector, hide stock selector for efficient frontier
+                if (stockSelect) stockSelect.style.display = 'none';
+                if (frontierSelect) frontierSelect.style.display = 'block';
+            } else {
+                // Show stock selector, hide cap selector for other options
+                if (stockSelect) stockSelect.style.display = 'block';
+                if (frontierSelect) frontierSelect.style.display = 'none';
             }
         }
-        
-        //portion for creating the efficient frontier chart
-        const { frontierData, individualAssets, optimalPortfolio, capitalMarketLine, equalWeightLine, riskFreeRate } = generateEfficientFrontierData('large_cap');
-        const frontierChart = new Chart(frontierCtx, {
-            type: 'scatter',
-            data: {
-                datasets: [
-                    {
-                        label: 'Capital Market Line',
-                        data: capitalMarketLine,
-                        borderColor: '#9C27B0',
-                        backgroundColor: 'rgba(156, 39, 176, 0.1)',
-                        borderWidth: 2,
-                        showLine: true,
-                        fill: false,
-                        pointRadius: 0,
-                        borderDash: [5, 5]
-                    },
-                    {
-                        label: 'Equal Weight Portfolio',
-                        data: equalWeightLine,
-                        borderColor: '#2196F3',
-                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
-                        borderWidth: 1,
-                        showLine: true,
-                        fill: false,
-                        pointRadius: 0,
-                        borderDash: [2, 2]
-                    },
-                    {
-                        label: 'Efficient Frontier',
-                        data: frontierData,
-                        borderColor: '#edd39a',
-                        backgroundColor: 'rgba(237, 211, 154, 0.1)',
-                        borderWidth: 3,
-                        showLine: true,
-                        fill: false,
-                        pointRadius: 0,
-                        tension: 0.2
-                    },
-                    {
-                        label: 'Optimal Portfolio',
-                        data: [optimalPortfolio],
-                        backgroundColor: '#4caf50',
-                        borderColor: '#4caf50',
-                        pointRadius: 8,
-                        pointHoverRadius: 10
-                    },
-                    {
-                        label: 'Individual Assets',
-                        data: individualAssets,
-                        backgroundColor: '#f44336',
-                        borderColor: '#f44336',
-                        pointRadius: 5,
-                        pointHoverRadius: 7
+
+        // Function to show/hide containers based on selection
+        function updateDisplay(containerId, displaySelectId, chartId, isFirstCard = true) {
+            const displaySelect = document.getElementById(displaySelectId);
+            const chartContainer = document.getElementById(`chart-container-${containerId}`);
+            const dataTableContainer = document.getElementById(isFirstCard ? 'data-table-container' : `data-table-container-${containerId}`);
+            const frontierLegend = document.getElementById('frontier-legend');
+            const chartCanvas = document.getElementById(`chart-${chartId}`);
+            
+            // Update card title first
+            updateCardTitle(displaySelectId, `card-title-${containerId}`, 
+                           isFirstCard ? 'Stock Metrics Comparison' : 'CRSP Efficient Frontier');
+            
+            // Update dropdown visibility
+            if (isFirstCard) {
+                updateDropdownVisibility(displaySelectId, 'stock-select-1', null);
+            } else {
+                updateDropdownVisibility(displaySelectId, 'stock-select-2', 'frontier-select');
+            }
+            
+            // Hide everything first
+            if (chartContainer) chartContainer.style.display = 'none';
+            if (dataTableContainer) dataTableContainer.style.display = 'none';
+            if (frontierLegend) frontierLegend.style.display = 'none';
+            
+            // Show selected display
+            const selectedValue = displaySelect.value;
+            
+            if (selectedValue === 'data-table') {
+                if (dataTableContainer) {
+                    dataTableContainer.style.display = 'block';
+                    if (!isFirstCard) {
+                        updateSecondaryDataTable();
                     }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        type: 'linear',
-                        position: 'bottom',
-                        title: {
-                            display: true,
-                            text: 'Risk (Standard Deviation)',
-                            color: '#ddd'
-                        },
-                        ticks: {
-                            color: '#ddd',
-                            callback: function(value) {
-                                return (value * 100).toFixed(0) + '%';
-                            }
-                        },
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        },
-                        min: 0.1,
-                        max: 0.35
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Expected Return',
-                            color: '#ddd'
-                        },
-                        ticks: {
-                            color: '#ddd',
-                            callback: function(value) {
-                                return (value * 100).toFixed(0) + '%';
-                            }
-                        },
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        },
-                        min: 0.0,
-                        max: 0.2
+                }
+            } else {
+                if (chartContainer) {
+                    chartContainer.style.display = 'block';
+                    if (frontierLegend && selectedValue === 'efficient-frontier') {
+                        frontierLegend.style.display = 'flex';
                     }
+                    
+                    // Destroy existing chart if it exists
+                    const chartToDestroy = chartId === '1' ? chart1 : chart2;
+                    if (chartToDestroy) {
+                        chartToDestroy.destroy();
+                    }
+                    
+                    // Create new chart based on selection
+                    const ctx = chartCanvas.getContext('2d');
+                    let newChart;
+                    
+                    switch(selectedValue) {
+                        case 'efficient-frontier':
+                            newChart = createEfficientFrontierChart(ctx);
+                            break;
+                        case 'total-risk':
+                            newChart = createTotalRiskChart(ctx);
+                            break;
+                        case 'mctr':
+                            newChart = createMCTRChart(ctx);
+                            break;
+                    }
+                    
+                    // Store reference to the chart
+                    if (chartId === '1') {
+                        chart1 = newChart;
+                    } else {
+                        chart2 = newChart;
+                    }
+                }
+            }
+        }
+
+        // Function to create Efficient Frontier Chart
+        function createEfficientFrontierChart(ctx) {
+            const { frontierData, individualAssets, optimalPortfolio, capitalMarketLine, equalWeightLine } = generateEfficientFrontierData('large_cap');
+            
+            return new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Capital Market Line',
+                            data: capitalMarketLine,
+                            borderColor: '#9C27B0',
+                            backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                            borderWidth: 2,
+                            showLine: true,
+                            fill: false,
+                            pointRadius: 0,
+                            borderDash: [5, 5]
+                        },
+                        {
+                            label: 'Equal Weight Portfolio',
+                            data: equalWeightLine,
+                            borderColor: '#2196F3',
+                            backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                            borderWidth: 1,
+                            showLine: true,
+                            fill: false,
+                            pointRadius: 0,
+                            borderDash: [2, 2]
+                        },
+                        {
+                            label: 'Efficient Frontier',
+                            data: frontierData,
+                            borderColor: '#edd39a',
+                            backgroundColor: 'rgba(237, 211, 154, 0.1)',
+                            borderWidth: 3,
+                            showLine: true,
+                            fill: false,
+                            pointRadius: 0,
+                            tension: 0.2
+                        },
+                        {
+                            label: 'Optimal Portfolio',
+                            data: [optimalPortfolio],
+                            backgroundColor: '#4caf50',
+                            borderColor: '#4caf50',
+                            pointRadius: 8,
+                            pointHoverRadius: 10
+                        },
+                        {
+                            label: 'Individual Assets',
+                            data: individualAssets,
+                            backgroundColor: '#f44336',
+                            borderColor: '#f44336',
+                            pointRadius: 5,
+                            pointHoverRadius: 7
+                        }
+                    ]
                 },
-                plugins: {
-                    legend: {
-                        display: false,
-                        labels: {
-                            color: '#ddd'
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            title: {
+                                display: true,
+                                text: 'Risk (Standard Deviation)',
+                                color: '#ddd'
+                            },
+                            ticks: {
+                                color: '#ddd',
+                                callback: function(value) {
+                                    return (value * 100).toFixed(0) + '%';
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            min: 0.1,
+                            max: 0.35
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Expected Return',
+                                color: '#ddd'
+                            },
+                            ticks: {
+                                color: '#ddd',
+                                callback: function(value) {
+                                    return (value * 100).toFixed(0) + '%';
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            min: 0.0,
+                            max: 0.2
                         }
                     },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const point = context.raw;
-                                const datasetLabel = context.dataset.label || '';
-                                
-                                if (datasetLabel === 'Efficient Frontier') {
-                                    return `Frontier: ${(point.y * 100).toFixed(1)}% return, ${(point.x * 100).toFixed(1)}% risk`;
-                                } else if (datasetLabel === 'Optimal Portfolio') {
-                                    return `Optimal: ${(point.y * 100).toFixed(1)}% return, ${(point.x * 100).toFixed(1)}% risk`;
-                                } else if (datasetLabel === 'Capital Market Line') {
-                                    return `CML: ${(point.y * 100).toFixed(1)}% return, ${(point.x * 100).toFixed(1)}% risk`;
-                                } else if (datasetLabel === 'Equal Weight Portfolio') {
-                                    return `Equal Weight: ${(point.y * 100).toFixed(1)}% return`;
-                                } else {
-                                    return `Asset: ${(point.y * 100).toFixed(1)}% return, ${(point.x * 100).toFixed(1)}% risk`;
+                    plugins: {
+                        legend: {
+                            display: false,
+                            labels: {
+                                color: '#ddd'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const point = context.raw;
+                                    const datasetLabel = context.dataset.label || '';
+                                    
+                                    if (datasetLabel === 'Efficient Frontier') {
+                                        return `Frontier: ${(point.y * 100).toFixed(1)}% return, ${(point.x * 100).toFixed(1)}% risk`;
+                                    } else if (datasetLabel === 'Optimal Portfolio') {
+                                        return `Optimal: ${(point.y * 100).toFixed(1)}% return, ${(point.x * 100).toFixed(1)}% risk`;
+                                    } else if (datasetLabel === 'Capital Market Line') {
+                                        return `CML: ${(point.y * 100).toFixed(1)}% return, ${(point.x * 100).toFixed(1)}% risk`;
+                                    } else if (datasetLabel === 'Equal Weight Portfolio') {
+                                        return `Equal Weight: ${(point.y * 100).toFixed(1)}% return`;
+                                    } else {
+                                        return `Asset: ${(point.y * 100).toFixed(1)}% return, ${(point.x * 100).toFixed(1)}% risk`;
+                                    }
                                 }
                             }
                         }
                     }
                 }
+            });
+        }
+
+        // Function to create Total Risk Contribution Chart
+        function createTotalRiskChart(ctx) {
+            // For first card, use stock-select-1; for second card, use stock-select-2
+            const stockSelectId = ctx.canvas.id === 'chart-1' ? 'stock-select-1' : 'stock-select-2';
+            const currentStock = document.getElementById(stockSelectId).value;
+            const stockData = getCurrentStockData(currentStock);
+            
+            const high = parseFloat(stockData['52WeekHigh']) || 0;
+            const low = parseFloat(stockData['52WeekLow']) || 0;
+            const currentPrice = (high + low) / 2;
+            const volatility = high > 0 ? ((high - low) / currentPrice * 100).toFixed(1) : 25;
+            
+            const totalRiskData = {
+                labels: ['Current Stock', 'Market Average'],
+                datasets: [{
+                    label: 'Total Risk Contribution (%)',
+                    data: [
+                        parseFloat(volatility),
+                        15
+                    ],
+                    backgroundColor: ['#2196F3', '#9C27B0'],
+                    borderColor: ['#2196F3', '#9C27B0'],
+                    borderWidth: 1
+                }]
+            };
+            
+            return new Chart(ctx, {
+                type: 'bar',
+                data: totalRiskData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'category',
+                            position: 'bottom',
+                            ticks: {
+                                color: '#ddd'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Risk Contribution (%)',
+                                color: '#ddd'
+                            },
+                            ticks: {
+                                color: '#ddd',
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ddd'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Function to create MCTR Pie Chart
+        function createMCTRChart(ctx) {
+            // For first card, use stock-select-1; for second card, use stock-select-2
+            const stockSelectId = ctx.canvas.id === 'chart-1' ? 'stock-select-1' : 'stock-select-2';
+            const currentStock = document.getElementById(stockSelectId).value;
+            const stockData = getCurrentStockData(currentStock);
+            
+            const peRatio = parseFloat(stockData.PERatio) || 25;
+            const beta = parseFloat(stockData.Beta) || 1.0;
+            const high = parseFloat(stockData['52WeekHigh']) || 0;
+            const low = parseFloat(stockData['52WeekLow']) || 0;
+            const currentPrice = (high + low) / 2;
+            const volatility = high > 0 ? ((high - low) / currentPrice) : 0.25;
+            
+            const mctrValue = Math.min(95, Math.max(5, (beta * 30 + volatility * 40 + (peRatio > 30 ? 20 : 10))));
+            const remainingRisk = 100 - mctrValue;
+            
+            const mctrData = {
+                labels: [currentStock + ' MCTR', 'Portfolio Residual Risk'],
+                datasets: [{
+                    data: [mctrValue, remainingRisk],
+                    backgroundColor: ['#edd39a', '#4caf50'],
+                    borderColor: ['#edd39a', '#4caf50'],
+                    borderWidth: 2
+                }]
+            };
+            
+            return new Chart(ctx, {
+                type: 'pie',
+                data: mctrData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#ddd',
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw;
+                                    return `${label}: ${value}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Helper function to get current stock data
+        function getCurrentStockData(symbol) {
+            return generateMockData(symbol);
+        }
+
+        // Function to update secondary data table
+        function updateSecondaryDataTable() {
+            const symbol = document.getElementById('stock-select-2').value;
+            const tableBody = document.querySelector('#metrics-table-2 tbody');
+            
+            tableBody.innerHTML = document.querySelector('#metrics-table tbody').innerHTML;
+        }
+
+        // Add event listeners for dropdowns
+        document.getElementById('display-select-1').addEventListener('change', function() {
+            updateDisplay('1', 'display-select-1', '1', true);
+        });
+
+        document.getElementById('display-select-2').addEventListener('change', function() {
+            updateDisplay('2', 'display-select-2', '2', false);
+        });
+
+        // Update the stock selection event listeners to handle both selectors
+        document.getElementById('stock-select-1').addEventListener('change', function() {
+            updateStockMetrics();
+            
+            // Refresh charts if they're showing stock-specific data
+            if (chart1 && document.getElementById('display-select-1').value !== 'efficient-frontier' && 
+                document.getElementById('display-select-1').value !== 'data-table') {
+                updateDisplay('1', 'display-select-1', '1', true);
             }
         });
-        
-        //updates the frontier when selection (caps) is changed 
-        document.getElementById('frontier-select').addEventListener('change', function() {
-            const newData = generateEfficientFrontierData(this.value);
-            
-            frontierChart.data.datasets[0].data = newData.capitalMarketLine;
-            frontierChart.data.datasets[1].data = newData.equalWeightLine;
-            frontierChart.data.datasets[2].data = newData.frontierData;
-            frontierChart.data.datasets[3].data = [newData.optimalPortfolio];
-            frontierChart.data.datasets[4].data = newData.individualAssets;
-            
-            frontierChart.update();
+
+        document.getElementById('stock-select-2').addEventListener('change', function() {
+            // Refresh charts if they're showing stock-specific data in the second card
+            if (chart2 && document.getElementById('display-select-2').value !== 'efficient-frontier' && 
+                document.getElementById('display-select-2').value !== 'data-table') {
+                updateDisplay('2', 'display-select-2', '2', false);
+            }
         });
-        
-        //updates the table when stock selection changed
-        document.getElementById('stock-select').addEventListener('change', updateStockMetrics);
-        
-        //portion for initalizing the data table 
+
+        // Update frontier chart when cap selection changes
+        document.getElementById('frontier-select').addEventListener('change', function() {
+            if (chart2 && document.getElementById('display-select-2').value === 'efficient-frontier') {
+                const newData = generateEfficientFrontierData(this.value);
+                
+                chart2.data.datasets[0].data = newData.capitalMarketLine;
+                chart2.data.datasets[1].data = newData.equalWeightLine;
+                chart2.data.datasets[2].data = newData.frontierData;
+                chart2.data.datasets[3].data = [newData.optimalPortfolio];
+                chart2.data.datasets[4].data = newData.individualAssets;
+                
+                chart2.update();
+            }
+        });
+
+        // Initialize everything on page load
         document.addEventListener('DOMContentLoaded', () => {
             updateDataStatus();
-            updateStockMetrics();
+            updateStockMetrics(); // This will populate the data table on load
             updateTickerData();
             
-            //refreshes the ticker data every 60 seconds, might want it more spread out to avoid wasting all API calls within like 2 minutes
+            // Initialize dropdown visibility
+            updateDropdownVisibility('display-select-1', 'stock-select-1', null);
+            updateDropdownVisibility('display-select-2', 'stock-select-2', 'frontier-select');
+            
+            // Initialize the efficient frontier chart
+            const frontierCtx = document.getElementById('chart-2').getContext('2d');
+            const { frontierData, individualAssets, optimalPortfolio, capitalMarketLine, equalWeightLine } = generateEfficientFrontierData('large_cap');
+            chart2 = new Chart(frontierCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Capital Market Line',
+                            data: capitalMarketLine,
+                            borderColor: '#9C27B0',
+                            backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                            borderWidth: 2,
+                            showLine: true,
+                            fill: false,
+                            pointRadius: 0,
+                            borderDash: [5, 5]
+                        },
+                        {
+                            label: 'Equal Weight Portfolio',
+                            data: equalWeightLine,
+                            borderColor: '#2196F3',
+                            backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                            borderWidth: 1,
+                            showLine: true,
+                            fill: false,
+                            pointRadius: 0,
+                            borderDash: [2, 2]
+                        },
+                        {
+                            label: 'Efficient Frontier',
+                            data: frontierData,
+                            borderColor: '#edd39a',
+                            backgroundColor: 'rgba(237, 211, 154, 0.1)',
+                            borderWidth: 3,
+                            showLine: true,
+                            fill: false,
+                            pointRadius: 0,
+                            tension: 0.2
+                        },
+                        {
+                            label: 'Optimal Portfolio',
+                            data: [optimalPortfolio],
+                            backgroundColor: '#4caf50',
+                            borderColor: '#4caf50',
+                            pointRadius: 8,
+                            pointHoverRadius: 10
+                        },
+                        {
+                            label: 'Individual Assets',
+                            data: individualAssets,
+                            backgroundColor: '#f44336',
+                            borderColor: '#f44336',
+                            pointRadius: 5,
+                            pointHoverRadius: 7
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            title: {
+                                display: true,
+                                text: 'Risk (Standard Deviation)',
+                                color: '#ddd'
+                            },
+                            ticks: {
+                                color: '#ddd',
+                                callback: function(value) {
+                                    return (value * 100).toFixed(0) + '%';
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            min: 0.1,
+                            max: 0.35
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Expected Return',
+                                color: '#ddd'
+                            },
+                            ticks: {
+                                color: '#ddd',
+                                callback: function(value) {
+                                    return (value * 100).toFixed(0) + '%';
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            min: 0.0,
+                            max: 0.2
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false,
+                            labels: {
+                                color: '#ddd'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const point = context.raw;
+                                    const datasetLabel = context.dataset.label || '';
+                                    
+                                    if (datasetLabel === 'Efficient Frontier') {
+                                        return `Frontier: ${(point.y * 100).toFixed(1)}% return, ${(point.x * 100).toFixed(1)}% risk`;
+                                    } else if (datasetLabel === 'Optimal Portfolio') {
+                                        return `Optimal: ${(point.y * 100).toFixed(1)}% return, ${(point.x * 100).toFixed(1)}% risk`;
+                                    } else if (datasetLabel === 'Capital Market Line') {
+                                        return `CML: ${(point.y * 100).toFixed(1)}% return, ${(point.x * 100).toFixed(1)}% risk`;
+                                    } else if (datasetLabel === 'Equal Weight Portfolio') {
+                                        return `Equal Weight: ${(point.y * 100).toFixed(1)}% return`;
+                                    } else {
+                                        return `Asset: ${(point.y * 100).toFixed(1)}% return, ${(point.x * 100).toFixed(1)}% risk`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
             setInterval(() => {
                 updateDataStatus();
                 updateTickerData();
             }, 60000);
         });
+
+        async function updateTickerData() {
+        }
     </script>
 </body>
 </html>
