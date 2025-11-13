@@ -4,15 +4,18 @@ const ENDPOINT = 'api/data';
 
 async function callServer(tickers) {
 
+    // TODO: Move period and interval params to server-side
     const query = new URLSearchParams({
         'tickers': tickers.join(','),
         'period': '10y',
         'interval': '1d'
     });
 
+    // constructs a request and sends to server
     const url = `${PROTOCOL}${SERVER}/${ENDPOINT}?${query}`;
     const response = await fetch(url);
 
+    // switch on HTTP status code 
     switch (response.status) {
 
         case 200: // success case
@@ -84,21 +87,25 @@ function generateEfficientFrontierData(type) {
         equalWeightLine.push({x: risk, y: equalWeightReturn});
     }
     
+    // pull data from cache
     const stockData = window.allData['graphs']['efficientFrontier'];
-    console.log(stockData);
-    
+
+    // get risks and returns for stocks
     const risks = Object.values(stockData).map(d => d.risk);
     const cags = Object.values(stockData).map(d => d.cagr);
 
+    // used for normalizing vals wrt other vals
     const minRisk = Math.min(...risks);
     const maxRisk = Math.max(...risks);
     const minCAGR = Math.min(...cags);
     const maxCAGR = Math.max(...cags);
 
+    // used to fit dots within the graph
     function scale(value, minValue, maxValue, chartMin, chartMax) {
         return chartMin + (value - minValue) * (chartMax - chartMin) / (maxValue - minValue);
     }
 
+    // maps raw cagr / risk to a scaled version fitting the graph
     for (const stock in stockData) {
         const risk = scale(stockData[stock].risk, minRisk, maxRisk, 0.1, 0.35);
         const cagr = scale(stockData[stock].cagr, minCAGR, maxCAGR, 0.0, 0.2);
@@ -171,9 +178,12 @@ function buildMetricsTable(ticker) {
     document.querySelectorAll('.card-title')[0].textContent = `${ticker} Metrics`;
 }
 
+
 //portion for initalizing the data table 
 document.addEventListener('DOMContentLoaded', () => {
 
+    // naively gets hardcoded tickers
+    // in the future needs a ticker upload button
     var tickerArray = [];
     document.querySelectorAll('#stock-select option').forEach(child => {
         const ticker = child.textContent.split('(')[1].split(')')[0];
@@ -183,13 +193,13 @@ document.addEventListener('DOMContentLoaded', () => {
     callServer(tickerArray)
     .then(data => {
         
-        console.log(data);
         // cache data in a global json
         window.allData = data;
         
         // by default builds a table from the first stock in the requested data
         buildMetricsTable(Object.keys(data['stats'])[0]);
 
+        // build chart
         const { frontierData, individualAssets, optimalPortfolio, capitalMarketLine, equalWeightLine, riskFreeRate } = generateEfficientFrontierData('large_cap');
         const frontierCtx = document.getElementById('frontier-chart').getContext('2d');
         const frontierChart = new Chart(frontierCtx, {
@@ -326,6 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('frontier-select').addEventListener('change', function() {
             const newData = generateEfficientFrontierData(this.value);
             
+            // update chart
             frontierChart.data.datasets[0].data = newData.capitalMarketLine;
             frontierChart.data.datasets[1].data = newData.equalWeightLine;
             frontierChart.data.datasets[2].data = newData.frontierData;
