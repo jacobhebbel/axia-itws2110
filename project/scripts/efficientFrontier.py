@@ -27,7 +27,7 @@ def start(data: pd.DataFrame) -> dict:
 
     # Vectorized risk computation (ignores NaNs automatically)
     daily_returns = close_prices.pct_change()
-    risk = daily_returns.std(ddof=1) * 100
+    risk = daily_returns.std(ddof=1) * 100 * np.sqrt(252)
 
     metrics_df = pd.DataFrame(
         {

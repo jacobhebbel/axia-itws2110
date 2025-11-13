@@ -86,11 +86,26 @@ function generateEfficientFrontierData(type) {
     
     const stockData = window.allData['graphs']['efficientFrontier'];
     console.log(stockData);
-    for (const stock in stockData) {
-        const risk = baseRisk + stockData[stock]['risk'];
-        const returnVal = baseReturn + stockData[stock]['cagr'];
-        individualAssets.push({x: risk, y: returnVal});
+    
+    const risks = Object.values(stockData).map(d => d.risk);
+    const cags = Object.values(stockData).map(d => d.cagr);
+
+    const minRisk = Math.min(...risks);
+    const maxRisk = Math.max(...risks);
+    const minCAGR = Math.min(...cags);
+    const maxCAGR = Math.max(...cags);
+
+    function scale(value, minValue, maxValue, chartMin, chartMax) {
+        return chartMin + (value - minValue) * (chartMax - chartMin) / (maxValue - minValue);
     }
+
+    for (const stock in stockData) {
+        const risk = scale(stockData[stock].risk, minRisk, maxRisk, 0.1, 0.35);
+        const cagr = scale(stockData[stock].cagr, minCAGR, maxCAGR, 0.0, 0.2);
+
+        individualAssets.push({x: risk, y: cagr});
+    }
+
     
     //part for the green dot which is the optimal portfolio 
     const optimalPortfolio = {x: optimalRisk, y: optimalReturn};
