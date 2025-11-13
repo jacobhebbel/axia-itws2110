@@ -28,10 +28,9 @@ def doAnalysis(tickers: list) -> dict:
 
         info['PERatio'] = pe
         info['Beta'] = stock.get("beta", 'N/A')
-        info['DividendYield'] = stock.get("dividendYield") if stock.get("dividendYield") is not None else 'N/A'
+        info['Dividend'] = stock.get("dividendYield") if stock.get("dividendYield") is not None else 'N/A'
         info['EPS'] = eps
-        info['52WeekHigh'] = stock.get("fiftyTwoWeekHigh", 'N/A')
-        info['52WeekLow'] = stock.get("fiftyTwoWeekLow", 'N/A')
+        info['52W'] = {'high': stock.get("fiftyTwoWeekHigh", 'N/A'), 'low': stock.get("fiftyTwoWeekLow", 'N/A')}
 
     # switching to market benchmark (spy)
     spy = yf.Ticker("SPY")
@@ -49,10 +48,9 @@ def doAnalysis(tickers: list) -> dict:
     res['average'] = {
         'PERatio': pe,
         'Beta': spy.get("beta", 1.0),
-        'DividendYield': spy.get("dividendYield") if spy.get("dividendYield") is not None else 'N/A',
+        'Dividend': spy.get("dividendYield") if spy.get("dividendYield") is not None else 'N/A',
         'EPS': eps,
-        '52WeekHigh': spy.get("fiftyTwoWeekHigh", 'N/A'),
-        '52WeekLow': spy.get("fiftyTwoWeekLow", 'N/A')
+        '52W': {'high': spy.get("fiftyTwoWeekHigh", 'N/A'), 'low': spy.get("fiftyTwoWeekLow", 'N/A')}
     }
 
     # market predictions (expectations)
@@ -67,15 +65,19 @@ def doAnalysis(tickers: list) -> dict:
     res['expectation'] = {
         'PERatio': pe,
         'Beta': 1.0,
-        'DividendYield': spy.get("trailingAnnualDividendYield") * 100 if spy.get("trailingAnnualDividendYield") is not None else 'N/A',
+        'Dividend': spy.get("trailingAnnualDividendYield") * 100 if spy.get("trailingAnnualDividendYield") is not None else 'N/A',
         'EPS': eps,
-        '52WeekHigh': 'N/A',
-        '52WeekLow': 'N/A'
+        '52W': {'high': 'N/A', 'low': 'N/A'}
     }
 
     for category, metrics in res.items():
         for metric, val in metrics.items():
-            res[category][metric] = round(val, 2) if val != 'N/A' else 'N/A'
+            
+            if type(val) == dict:
+                res[category][metric]['high'] = round(val['high'], 2) if val['high'] != 'N/A' else 'N/A'
+                res[category][metric]['low'] = round(val['low'], 2) if val['low'] != 'N/A' else 'N/A'
+            else:
+                res[category][metric] = round(val, 2) if val != 'N/A' else 'N/A'
     return res
 
 def runScripts(data: pd.DataFrame) -> dict:
