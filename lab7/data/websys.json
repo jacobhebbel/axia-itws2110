@@ -1,0 +1,85 @@
+{
+    "Websys_course": {
+
+        "Lectures": {
+            "Lecture 1": {
+                "Title": "Welcome Lecture",
+                "Description": "Outlined the course rubric including class format, grading policies, and overall expectations. Introduced the topic for this semester's group term project."
+            },
+            "Lecture 2": {
+                "Title": "The Basics",
+                "Description": "Reviewed concepts learned during the intro course. This involved the basics of how the internet functions including servers, APIs, and data flow."
+            },
+            "Lecture 3": {
+                "Title": "CSS Part 1",
+                "Description": "Described the role of Cascading Style Sheets (CSS) in web design. Went over the anatomy of a CSS page such as selectors, properties, and specificity."
+            },
+            "Lecture 4": {
+                "Title": "CSS Part 2",
+                "Description": "Delved deeper into CSS, specifically how to use CSS to create a reactive website. This involved utilizing media-queries, keyframes, and bootstrap."
+            },
+            "Lecture 5": {
+                "Title": "JavaScript",
+                "Description": "Went over JavaScript's role as a client-side scripting language and how it can be used to create dynamic websites. Also covered JavaScript basics such as arrays, objects, and functions, as well as the Document Object Model (DOM)."
+            },
+            "Lecture 6": {
+                "Title": "AJAX and JSON",
+                "Description": "Covered how to use JavaScript Object Notation (JSON) to store data in a JavaScript friendly way. Also how to use Asynchronous JavaScript And XML (AJAX) in combination with jQuery to dynamically load data onto a page without refreshing."
+            },
+            "Lecture 7": {
+                "Title": "APIs",
+                "Description": "Described how APIs regulate how programs send and receive data. Also went over Representational State Transfer (REST) methodology in creating a uniform API format with universal constraints, as well as real world examples."
+            },
+            "Lecture 8": {
+                "Title": "Frontend Optimization",
+                "Description": "Discussed techniques to optimize frontend visuals to minimize loading times and retain user attention. Strategies included minimizing markup and JavaScript size, limiting image usage, and implementing desirable visuals."
+            },
+            "Lecture 9": {
+                "Title": "PHP Functions, Objects, Classes",
+                "Description": "Went over PHP Hypertext Preprocessor (PHP) and its role as a loosely-typed interpreted language. Detailed the anatomy of a PHP page including variables, functions, objects and classes."
+            },
+            "Lecture 10": {
+                "Title": "PHP and mySQL",
+                "Description": "Covered how to use mySQL to store data within a database and manipulate this data in combination with PHP using prepared statements and live sessions."
+            },
+            "Lecture 11": {
+                "Title": "PHP Interfaces, Abstract Classes, Polymorphism",
+                "Description": "Outlined the concept of using interfaces and abstract classes in PHP to implement classes which inherit features from a parent class. Also defined polymorphism as the ability for a single function or class to perform multiple processes/take on multiple traits in different circumstances."
+            },
+            "Lecture 12": {
+                "Title": "Authentication and Authorization",
+                "Description": "Defined Authentication as the ability to recognize an individual as authentic, and covered how to create strong passwords and store them through hashing. Defined Authorization as determining if someone has the authority to do something, and covered how to implement authorization through permissions and roles."
+            }
+            
+        },
+
+        "Labs": {
+            "Lab 1": {
+                "Title": "Group Portfolio",
+                "Description": "A website showcasing a group's resumes and backgrounds, united by a common styling and structure"
+            },
+            "Lab 2": {
+                "Title": "US Constitution Day",
+                "Description": "Built an application for explaining the historical and current significance of the US Constitution"
+            },
+            "Lab 3": {
+                "Title": "JavaScript, AJAX, JSON, using APIs",
+                "Description": "Built a dashboard integrating 2 APIs that utilized dynamic content updates and asynchronous request behavior"
+            },
+            "Lab 4": {
+                "Title": "AI",
+                "Description": "Recreated lab 3 using only prompt engineering"
+            },
+            "Lab 5": {
+                "Title": "Introduction to Bloomberg Terminal",
+                "Description": "Observed an effective web system in action, capable of immediate data queries and visualizations while integrating with current events"
+            },
+            "Lab 6": {
+                "Title": "PHP, OOP and Input Handling",
+                "Description": "Learned how to develop an application backend and design DRY PHP objects"
+            }
+            
+        }
+
+    }
+}
