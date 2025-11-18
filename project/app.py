@@ -1,84 +1,77 @@
 import yfinance as yf
 import pandas as pd
 from flask import Flask, request, jsonify
-from scripts.validateTicker import validate_ticker as isValidTicker
+from utils.validateTicker import validate_ticker as isValidTicker
 from flask import Flask, request, jsonify, Request
 
-from scripts import riskChart, efficientFrontier, systematicrisk
+from utils import riskChart, efficientFrontier, systematicrisk
 
-def doAnalysis(tickers: list) -> dict:
-    """
-    Creates a dictionary of P/E Ratio, Volatility betas, Dividend Yield, EPS, and 52W range stats 
-    """
-    res = {ticker: {} for ticker in tickers}
-    for ticker in tickers:
-        
-        # stock stats
-        stock = yf.Ticker(ticker)
-        info = res[ticker]
-        price = stock.history(period="1d")["Close"].iloc[-1]
-        stock = stock.info
-
-        # eps / pe calculation
-        eps, pe = stock.get("trailingEps", 'N/A'), stock.get("trailingPE", 'N/A')
-        if eps != 'N/A' and pe == 'N/A':
-            pe = price / eps
-        elif pe != 'N/A' and eps == 'N/A':
-            eps = price / pe
-
-        info['PERatio'] = pe
-        info['Beta'] = stock.get("beta", 'N/A')
-        info['Dividend'] = stock.get("dividendYield") if stock.get("dividendYield") is not None else 'N/A'
-        info['EPS'] = eps
-        info['52W'] = {'high': stock.get("fiftyTwoWeekHigh", 'N/A'), 'low': stock.get("fiftyTwoWeekLow", 'N/A')}
-
-    # switching to market benchmark (spy)
-    spy = yf.Ticker("SPY")
-    price = spy.history(period="1d")["Close"].iloc[-1]
-    spy = spy.info
+def fetchData(ticker: str) -> tuple[dict, pd.DataFrame]:
+    """gets historical prices, stats, and recent close"""
     
-    # market averages
-    # compute eps / pe
-    eps = spy.get("trailingEps", 'N/A')
-    pe = spy.get("trailingPE", 'N/A')
+    stock = yf.Ticker(ticker)
+    stats, price = stock.info, stock.history(period="1d")["close"].iloc[-1]
+
+    eps, pe = stats.get("trailingEps", 'N/A'), stats.get("trailingPE", 'N/A')
     if eps != 'N/A' and pe == 'N/A':
         pe = price / eps
     elif pe != 'N/A' and eps == 'N/A':
         eps = price / pe
-    res['average'] = {
+    
+    stockMetrics = {
         'PERatio': pe,
-        'Beta': spy.get("beta", 1.0),
-        'Dividend': spy.get("dividendYield") if spy.get("dividendYield") is not None else 'N/A',
+        'Beta': stats.get('beta', 'N/A'),
+        'Dividend': stats.get('dividendYield', 'N/A'),
         'EPS': eps,
-        '52W': {'high': spy.get("fiftyTwoWeekHigh", 'N/A'), 'low': spy.get("fiftyTwoWeekLow", 'N/A')}
+        '52W': {'high': stats.get("fiftyTwoWeekHigh", 'N/A'), 'low': stats.get("fiftyTwoWeekLow", 'N/A')}
+    }
+
+    stockData = yf.download(ticker, pd.DataFrame(), period='10y', interval='1d', timeout=50)
+    stockPrices = stockData if stockData is not None else pd.DataFrame()
+
+    return stockMetrics, stockPrices
+
+def fetchMarketData() -> tuple[dict, dict]:
+    """Computes Averages/Expectations on Market Statistics"""
+
+    spy = yf.Ticker("SPY")
+    price = spy.history(period="1d")["Close"].iloc[-1]
+    stats = spy.info
+    
+    # market averages
+    eps = stats.get("trailingEps", 'N/A')
+    pe = stats.get("trailingPE", 'N/A')
+    if eps != 'N/A' and pe == 'N/A':
+        pe = price / eps
+    elif pe != 'N/A' and eps == 'N/A':
+        eps = price / pe
+
+    averages = {
+        'PERatio': pe,
+        'Beta': stats.get("beta", 1.0),
+        'Dividend': stats.get("dividendYield", "N/A"),
+        'EPS': eps,
+        '52W': {'high': stats.get("fiftyTwoWeekHigh", 'N/A'), 'low': stats.get("fiftyTwoWeekLow", 'N/A')}
     }
 
     # market predictions (expectations)
-    eps = spy.get("forwardEps", 'N/A')
-    pe = spy.get("forwardPE", 'N/A')
+    eps = stats.get("forwardEps", 'N/A')
+    pe = stats.get("forwardPE", 'N/A')
 
     if eps != 'N/A' and pe == 'N/A':
         pe = price / eps
     elif pe != 'N/A' and eps == 'N/A':
         eps = price / pe
 
-    res['expectation'] = {
+    expectations = {
         'PERatio': pe,
         'Beta': 1.0,
-        'Dividend': spy.get("trailingAnnualDividendYield") * 100 if spy.get("trailingAnnualDividendYield") is not None else 'N/A',
+        'Dividend': stats.get("trailingAnnualDividendYield", 'N/A'),
         'EPS': eps,
         '52W': {'high': 'N/A', 'low': 'N/A'}
     }
 
-    for category, metrics in res.items():
-        for metric, val in metrics.items():
-            
-            if type(val) == dict:
-                res[category][metric]['high'] = round(val['high'], 2) if val['high'] != 'N/A' else 'N/A'
-                res[category][metric]['low'] = round(val['low'], 2) if val['low'] != 'N/A' else 'N/A'
-            else:
-                res[category][metric] = round(val, 2) if val != 'N/A' else 'N/A'
-    return res
+    return averages, expectations
 
 def runScripts(data: pd.DataFrame) -> dict:
     """link between service and scripts. returns a dict of stat: val pairs"""
@@ -90,42 +83,18 @@ def runScripts(data: pd.DataFrame) -> dict:
 
     return res
 
-def validateRequest(requestObj: Request) -> tuple[bool, dict]:
+def validateRequest() -> tuple[bool, str]:
     """Ensures the request has required parameters"""
-
-    res = {}
-    res['success'] = False
-    res['requiredParams'] = ['tickers', 'period', 'interval']
-    res['validPeriods'] = ['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y']
-    res['validIntervals'] = ['1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h', '1d', '5d', '1wk', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y']
-    
-    # error checking params
-    if any(arg not in res['requiredParams'] for arg in requestObj.args.keys()):
-        res['error'] = 'missing required parameter'
-        return False, res
 
     rawTickers = str(request.args.get('tickers')).split(',')    
     # error checking tickers
     if any(not isValidTicker(ticker) for ticker in rawTickers):
-        res['error'] = 'at least 1 ticker was invalid'
-        return False, res
-
-    # error checking period
-    validPeriods, period = res['validPeriods'], requestObj.args.get('period')
-    if period not in validPeriods:
-        res['error'] = 'period not valid'
-        return False, res
-    
-    # error checking interval
-    validIntervals, interval = res['validIntervals'], requestObj.args.get('interval')
-    if interval not in validIntervals:
-        res['error'] = 'interval not valid'
-        return False, res
-    
-    return True, {}
+        err = 'at least 1 ticker was invalid'
+        return False, err
+    else:
+        return True, 'success'
 
 app = Flask(__name__)
-
 # ping to test connection
 @app.route("/ping", methods=["GET"])
 def ping():
@@ -142,9 +111,9 @@ def yfinanceCall():
             period:         
     """
 
-    isValid, error = validateRequest(request)
+    isValid, error = validateRequest()
     if not isValid:
-        return error, 400
+        return {'error': error}, 400
 
     # constructs the query
     tickers = list(str(request.args.get('tickers')).split(','))
@@ -174,4 +143,21 @@ def yfinanceCall():
             }), 500
     
 if __name__ == "__main__":
+    from concurrent.futures import ThreadPoolExecutor
+    from concurrent.futures import ProcessPoolExecutor
+
+    sp500 = list(yf.Ticker('^GSPC'))
+
+    # use multithreading for request operations
+    # use multiprocessing for cpu operations
+    # max workers should be the number of cpu cores
+
+    stockData, statData, graphData = pd.DataFrame(), {}, {}
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        statData = list(executor.map(fetchData, sp500))
+        # find some way to throw in the market data computation in parallel to this
+
+    with ProcessPoolExecutor(max_workers=5) as executor:
+        graphData = list(executor.map(runScripts, stockData))
+
     app.run(port=4000)
