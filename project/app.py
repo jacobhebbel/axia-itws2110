@@ -86,7 +86,21 @@ def runScripts(data: pd.DataFrame) -> dict:
     
     res['mctr'] = riskChart.start(data)
     res['efficientFrontier'] = efficientFrontier.start(data)
-    #res['systematicRisk'] = systematicrisk.start(data)
+
+    # Stores the beta value for each ticker in data in a dictionary under the respective key in res
+    betas = {}
+    for col in data.columns.levels[1]:
+        if col != "SPY":
+            betas[col] = systematicrisk.start(data, asset=col, market="SPY")
+
+    res['systematicRisk'] = betas
+    '''
+    Example:
+    "systematicRisk": {
+        "AAPL": 1.31,
+        "MSFT": 1.06
+    }
+    '''
 
     return res
 
