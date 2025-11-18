@@ -6,73 +6,6 @@ from flask import Flask, request, jsonify, Request
 
 from utils import riskChart, efficientFrontier, systematicrisk
 
-def fetchData(ticker: str) -> tuple[dict, pd.DataFrame]:
-    """gets historical prices, stats, and recent close"""
-    
-    stock = yf.Ticker(ticker)
-    stats, price = stock.info, stock.history(period="1d")["close"].iloc[-1]
-
-    eps, pe = stats.get("trailingEps", 'N/A'), stats.get("trailingPE", 'N/A')
-    if eps != 'N/A' and pe == 'N/A':
-        pe = price / eps
-    elif pe != 'N/A' and eps == 'N/A':
-        eps = price / pe
-    
-    stockMetrics = {
-        'PERatio': pe,
-        'Beta': stats.get('beta', 'N/A'),
-        'Dividend': stats.get('dividendYield', 'N/A'),
-        'EPS': eps,
-        '52W': {'high': stats.get("fiftyTwoWeekHigh", 'N/A'), 'low': stats.get("fiftyTwoWeekLow", 'N/A')}
-    }
-
-    stockData = yf.download(ticker, pd.DataFrame(), period='10y', interval='1d', timeout=50)
-    stockPrices = stockData if stockData is not None else pd.DataFrame()
-
-    return stockMetrics, stockPrices
-
-def fetchMarketData() -> tuple[dict, dict]:
-    """Computes Averages/Expectations on Market Statistics"""
-
-    spy = yf.Ticker("SPY")
-    price = spy.history(period="1d")["Close"].iloc[-1]
-    stats = spy.info
-    
-    # market averages
-    eps = stats.get("trailingEps", 'N/A')
-    pe = stats.get("trailingPE", 'N/A')
-    if eps != 'N/A' and pe == 'N/A':
-        pe = price / eps
-    elif pe != 'N/A' and eps == 'N/A':
-        eps = price / pe
-
-    averages = {
-        'PERatio': pe,
-        'Beta': stats.get("beta", 1.0),
-        'Dividend': stats.get("dividendYield", "N/A"),
-        'EPS': eps,
-        '52W': {'high': stats.get("fiftyTwoWeekHigh", 'N/A'), 'low': stats.get("fiftyTwoWeekLow", 'N/A')}
-    }
-
-    # market predictions (expectations)
-    eps = stats.get("forwardEps", 'N/A')
-    pe = stats.get("forwardPE", 'N/A')
-
-    if eps != 'N/A' and pe == 'N/A':
-        pe = price / eps
-    elif pe != 'N/A' and eps == 'N/A':
-        eps = price / pe
-
-    expectations = {
-        'PERatio': pe,
-        'Beta': 1.0,
-        'Dividend': stats.get("trailingAnnualDividendYield", 'N/A'),
-        'EPS': eps,
-        '52W': {'high': 'N/A', 'low': 'N/A'}
-    }
-
-    return averages, expectations
-
 def runScripts(data: pd.DataFrame) -> dict:
     """link between service and scripts. returns a dict of stat: val pairs"""
     res = {}
@@ -106,19 +39,31 @@ def ping():
 def yfinanceCall():
     """For fetching data from yfinance
     Parameters:        
-            tickers:        a comma-separated string of length-4 tickers to collect data on
-            interval:       
-            period:         
+            tickers:        a comma-separated string of length-4 tickers to collect data on    
     """
 
+    
+    # validate the request
     isValid, error = validateRequest()
     if not isValid:
         return {'error': error}, 400
 
-    # constructs the query
+    # read the tickers
     tickers = list(str(request.args.get('tickers')).split(','))
+    
+    # read from the cache
+    stats, graphs = [], []
+    for ticker in tickers:
+        s, g = sCache.query(ticker), gCache.query(ticker)
+        
+    # read values from cache
+    stats.append(sCache.query(t) for t in tickers)
+    graphs.append(gCache.query(t) for t in tickers)
+    
     interval = str(request.args.get('interval'))
     period = str(request.args.get('period'))
+
+
 
     try:
         # if yf throws an error, it should imply the service is down (we have strong error checking)
@@ -141,10 +86,12 @@ def yfinanceCall():
             "success": False, 
             "err": "an internal service is currently unavailable"
             }), 500
-    
+
+
 if __name__ == "__main__":
     from concurrent.futures import ThreadPoolExecutor
     from concurrent.futures import ProcessPoolExecutor
+    from utils.cache import GraphCache, StatsCache
 
     sp500 = list(yf.Ticker('^GSPC'))
 
@@ -152,12 +99,20 @@ if __name__ == "__main__":
     # use multiprocessing for cpu operations
     # max workers should be the number of cpu cores
 
-    stockData, statData, graphData = pd.DataFrame(), {}, {}
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        statData = list(executor.map(fetchData, sp500))
-        # find some way to throw in the market data computation in parallel to this
 
-    with ProcessPoolExecutor(max_workers=5) as executor:
-        graphData = list(executor.map(runScripts, stockData))
+    TTL, SWEEP = 999, 999
+    gCache, sCache = GraphCache(TTL, SWEEP), StatsCache(TTL, SWEEP)
+    stockData, statData, graphData = pd.DataFrame(), {}, {}
+    for stock in sp500:
+
+        statData = fetchData(stock)
+        sCache.add(stock, statData)
+
+        graphData = runScripts(stock)
+        gCache.add(stock, graphData)
+
+    currentMarket, expectedMarket = fetchMarketData()
+    sCache.add('avg', currentMarket)
+    sCache.add('exp', expectedMarket)
 
     app.run(port=4000)
