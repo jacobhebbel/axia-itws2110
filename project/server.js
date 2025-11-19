@@ -40,26 +40,33 @@ app.get("/api/ping", async (req, res) => {
 
 app.get("/api/data", async (req, res) => {
 
-    // validates request
-    if (!validReq(req.query)) {
-        return res.status(400).json({
-            'success': false,
-            'err': '1 or more required parameters missing',
-            'requiredParams': ['tickers', 'interval', 'period']
-        });
-    }
-
     // parses vars from query args ({validReq is true} ==> {all args present})
     const query = new URLSearchParams(req.query);
     
     try {
 
         // axios can succeed, timeout, error with response, or error with no response
-        const { data } = await axios.get(`${URL_FLASK}/data?${query.toString()}`, {
+        var { data } = await axios.get(`${URL_FLASK}/data?${query.toString()}`, {
             'timeout': 500000
         });
+        
         console.log(data);
-        return res.status(200).json(data);
+        
+        reformattedData = { 'graphs': {}, 'stats': data['stats'] };
+        for (const stock in data.graphs) {
+            const stockGraphs = data.graphs[stock];
+
+            for (const [graphName, graphValues] of Object.entries(stockGraphs)) {
+                if (!reformattedData['graphs'][graphName]) {
+                    reformattedData['graphs'][graphName] = {};
+                }
+                reformattedData['graphs'][graphName][stock] = graphValues;
+            }
+        }
+        
+        reformattedData['stats'] = data['stats'];
+        console.log(reformattedData);
+        return res.status(200).json(reformattedData);
     
     // timeout, error with response, or error with no response 
     } catch(error){

@@ -6,9 +6,7 @@ async function callServer(tickers) {
 
     // TODO: Move period and interval params to server-side
     const query = new URLSearchParams({
-        'tickers': tickers.join(','),
-        'period': '10y',
-        'interval': '1d'
+        'tickers': tickers.join(',')
     });
 
     // constructs a request and sends to server
@@ -88,17 +86,22 @@ function generateEfficientFrontierData(type) {
     }
     
     // pull data from cache
-    const stockData = window.allData['graphs']['efficientFrontier'];
-
+    const graphData = window.allData['graphs'];
+    const effFrontier = graphData['efficientFrontier'];
+    const mctrData = graphData['mctr'];
+    
     // get risks and returns for stocks
-    const risks = Object.values(stockData).map(d => d.risk);
-    const cags = Object.values(stockData).map(d => d.cagr);
+    const risks = Object.values(effFrontier).map(stock => stock.risk);
+    const cagrs = Object.values(effFrontier).map(stock => stock.cagr);
+
+    console.log(risks)
+    console.log(cagrs)
 
     // used for normalizing vals wrt other vals
     const minRisk = Math.min(...risks);
     const maxRisk = Math.max(...risks);
-    const minCAGR = Math.min(...cags);
-    const maxCAGR = Math.max(...cags);
+    const minCAGR = Math.min(...cagrs);
+    const maxCAGR = Math.max(...cagrs);
 
     // used to fit dots within the graph
     function scale(value, minValue, maxValue, chartMin, chartMax) {
@@ -106,9 +109,9 @@ function generateEfficientFrontierData(type) {
     }
 
     // maps raw cagr / risk to a scaled version fitting the graph
-    for (const stock in stockData) {
-        const risk = scale(stockData[stock].risk, minRisk, maxRisk, 0.1, 0.35);
-        const cagr = scale(stockData[stock].cagr, minCAGR, maxCAGR, 0.0, 0.2);
+    for (const stock in effFrontier) {
+        const risk = scale(effFrontier[stock].risk, minRisk, maxRisk, 0.1, 0.35);
+        const cagr = scale(effFrontier[stock].cagr, minCAGR, maxCAGR, 0.0, 0.2);
 
         individualAssets.push({x: risk, y: cagr});
     }
@@ -126,8 +129,8 @@ function buildMetricsTable(ticker) {
 
     // referenced cached json from callServer
     const stock = window.allData['stats'][ticker];
-    const average = window.allData['stats']['average'];
-    const future = window.allData['stats']['expectation'];
+    const average = window.allData['stats']['marketAverages'];
+    const future = window.allData['stats']['marketPredictions'];
 
     // parses a value
     const parsingTable = {
@@ -194,6 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(data => {
         
         // cache data in a global json
+        console.log(data);
         window.allData = data;
         
         // by default builds a table from the first stock in the requested data
