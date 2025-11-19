@@ -46,11 +46,27 @@ app.get("/api/data", async (req, res) => {
     try {
 
         // axios can succeed, timeout, error with response, or error with no response
-        const { data } = await axios.get(`${URL_FLASK}/data?${query.toString()}`, {
+        var { data } = await axios.get(`${URL_FLASK}/data?${query.toString()}`, {
             'timeout': 500000
         });
+        
         console.log(data);
-        return res.status(200).json(data);
+        
+        reformattedData = { 'graphs': {}, 'stats': data['stats'] };
+        for (const stock in data.graphs) {
+            const stockGraphs = data.graphs[stock];
+
+            for (const [graphName, graphValues] of Object.entries(stockGraphs)) {
+                if (!reformattedData['graphs'][graphName]) {
+                    reformattedData['graphs'][graphName] = {};
+                }
+                reformattedData['graphs'][graphName][stock] = graphValues;
+            }
+        }
+        
+        reformattedData['stats'] = data['stats'];
+        console.log(reformattedData);
+        return res.status(200).json(reformattedData);
     
     // timeout, error with response, or error with no response 
     } catch(error){
