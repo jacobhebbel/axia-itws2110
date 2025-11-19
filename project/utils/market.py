@@ -1,7 +1,28 @@
 import yfinance as yf
 import pandas as pd
+import asyncio
 
-def fetchData(ticker: str) -> tuple[dict, pd.DataFrame]:
+def fetchTickerInfo(ticker: str) -> dict:
+    """
+    Blocking call to download data
+    """
+    return yf.Ticker(ticker).info
+
+
+async def asyncTickerInfo(ticker: str) -> dict:
+    """
+    Call blocking fetch in a thread
+    """
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, fetchTickerInfo, ticker)
+
+
+async def fetchAllTickers(tickers: list[str]) -> list:
+    tasks = [asyncTickerInfo(t) for t in tickers]
+    return await asyncio.gather(*tasks, return_exceptions=True)
+
+
+def fetchData(ticker: str, info: dict, clost: float) -> dict:
     """gets historical prices, stats, and recent close"""
     
     stock = yf.Ticker(ticker)
@@ -21,10 +42,7 @@ def fetchData(ticker: str) -> tuple[dict, pd.DataFrame]:
         '52W': {'high': stats.get("fiftyTwoWeekHigh", 'N/A'), 'low': stats.get("fiftyTwoWeekLow", 'N/A')}
     }
 
-    stockData = yf.download(ticker, pd.DataFrame(), period='10y', interval='1d', timeout=50)
-    stockPrices = stockData if stockData is not None else pd.DataFrame()
-
-    return stockMetrics, stockPrices
+    return stockMetrics
 
 
 def fetchMarketData() -> tuple[dict, dict]:

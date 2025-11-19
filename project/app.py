@@ -4,17 +4,9 @@ from flask import Flask, request, jsonify
 from utils.validateTicker import validate_ticker as isValidTicker
 from flask import Flask, request, jsonify, Request
 
-from utils import riskChart, efficientFrontier, systematicrisk
 
-def runScripts(data: pd.DataFrame) -> dict:
-    """link between service and scripts. returns a dict of stat: val pairs"""
-    res = {}
-    
-    res['mctr'] = riskChart.start(data)
-    res['efficientFrontier'] = efficientFrontier.start(data)
-    #res['systematicRisk'] = systematicrisk.start(data)
+app = Flask(__name__)
 
-    return res
 
 def validateRequest() -> tuple[bool, str]:
     """Ensures the request has required parameters"""
@@ -27,12 +19,21 @@ def validateRequest() -> tuple[bool, str]:
     else:
         return True, 'success'
 
-app = Flask(__name__)
+
+def merge(d1: dict, d2: dict) -> dict:
+    """
+    Helper function for combining dictionaries
+    """
+    for k, v in d2.items():
+        d1[k] = v
+    return d1
+
 # ping to test connection
 @app.route("/ping", methods=["GET"])
 def ping():
     """For testing if the flask service is running"""
     return jsonify({"success": True}), 200
+
 
 # collect data given tickers, interval, period
 @app.route("/data", methods=["GET"])
@@ -42,7 +43,6 @@ def yfinanceCall():
             tickers:        a comma-separated string of length-4 tickers to collect data on    
     """
 
-    
     # validate the request
     isValid, error = validateRequest()
     if not isValid:
@@ -50,69 +50,44 @@ def yfinanceCall():
 
     # read the tickers
     tickers = list(str(request.args.get('tickers')).split(','))
+    print(tickers)
     
-    # read from the cache
-    stats, graphs = [], []
-    for ticker in tickers:
-        s, g = sCache.query(ticker), gCache.query(ticker)
-        
-    # read values from cache
-    stats.append(sCache.query(t) for t in tickers)
-    graphs.append(gCache.query(t) for t in tickers)
-    
-    interval = str(request.args.get('interval'))
-    period = str(request.args.get('period'))
-
-
-
     try:
-        # if yf throws an error, it should imply the service is down (we have strong error checking)
-        res = yf.download(tickers, period=period, interval=interval, timeout=50) 
-        data = res if res is not None else pd.DataFrame()
 
-        # script results is a dict of our .. script results
-        scriptResults = runScripts(data)
-        analysisResults = doAnalysis(tickers)
+        # readItems internally handles misses
+        # market vals are fixed at start, and | takes the union of the 3 dicts
+        stats = sCache.readItems(tickers)
+        graphs = gCache.readItems(tickers)
+
+        stats = merge(merge(stats, {'marketAverages': CURRENT_MARKET}), {'marketPredictions': EXPECTED_MARKET})
+        print(stats)
+
         return {
-            'graphs': scriptResults,
-            'stats': analysisResults
+            'stats': stats,
+            'graphs': graphs,
+
         }, 200
-    
-    # if an error occurred, likely yf is down
+        
     except Exception as e:
-        print('exception occurred')
         print(e)
-        return jsonify({
-            "success": False, 
-            "err": "an internal service is currently unavailable"
-            }), 500
+        raise e
+        return {'err': 'internal server error'}, 500
 
 
 if __name__ == "__main__":
-    from concurrent.futures import ThreadPoolExecutor
-    from concurrent.futures import ProcessPoolExecutor
     from utils.cache import GraphCache, StatsCache
+    from utils.scripts import fetchMarketData, getSp500Tickers
 
-    sp500 = list(yf.Ticker('^GSPC'))
-
-    # use multithreading for request operations
-    # use multiprocessing for cpu operations
-    # max workers should be the number of cpu cores
-
-
+    # sp500 = [t for t in getSp500Tickers() if isValidTicker(t)]
     TTL, SWEEP = 999, 999
     gCache, sCache = GraphCache(TTL, SWEEP), StatsCache(TTL, SWEEP)
-    stockData, statData, graphData = pd.DataFrame(), {}, {}
-    for stock in sp500:
-
-        statData = fetchData(stock)
-        sCache.add(stock, statData)
-
-        graphData = runScripts(stock)
-        gCache.add(stock, graphData)
-
-    currentMarket, expectedMarket = fetchMarketData()
-    sCache.add('avg', currentMarket)
-    sCache.add('exp', expectedMarket)
-
+    
+    # warm up caches
+    # sCache.warmup(sp500, batchSize=10, delay=10.0)
+    # gCache.warmup(sp500, batchSize=10, delay=10.0)
+    
+    # constants that dont rlly change in short term
+    CURRENT_MARKET, EXPECTED_MARKET = fetchMarketData()
+    print(CURRENT_MARKET)
+    print(EXPECTED_MARKET)
     app.run(port=4000)

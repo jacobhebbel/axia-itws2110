@@ -27,6 +27,15 @@ class TemplateTTLCache:
         self._sweepThread.start()
 
 
+    def merge(self, d1: dict, d2: dict):
+        """
+        Helper function for combining dictionaries
+        """
+        for k, v in d2.items():
+            d1[k] = v
+        return d1
+
+
     def cached(self) -> list:
         """
         Queries the cache and returns all non-expired keys
@@ -49,8 +58,8 @@ class TemplateTTLCache:
             NOW = datetime.datetime.now()
             self.data[key]['expiry'] = NOW + self.TTL
             
-            return self.data.get(key, None)
-        
+            entry = self.data.get(key, None)
+            return entry['data'] if entry is not None else None
         else:
             return None
 
@@ -66,6 +75,7 @@ class TemplateTTLCache:
         
         # loads the data using a custom method
         data = self.loadData(list(misses))
+        print(data)
 
         # assuming items 1-to-1 corresponds with misses
         # this adds all of the misses into the cache
@@ -73,7 +83,8 @@ class TemplateTTLCache:
             self.add(key, item)
 
         # return the union of the hit results and the miss results
-        res = {hit: self.query(hit) for hit in hits} | {key: item for key, item in zip(misses, items)}
+        res = self.merge({hit: self.query(hit) for hit in hits}, data)
+        print(res)
         return res
 
 
@@ -125,21 +136,51 @@ class TemplateTTLCache:
             self.data.pop(key)
 
 
+    def warmup(self, items: list[str], batchSize: int, delay: float):
+        """
+        Given keys, populates cache with k:v pairs while respecting
+        batchSize and delay parameters
+        """
+        for i in range(batchSize, len(items), batchSize):
+            i = min(len(items), i)
+
+            tickerBatch = items[i - batchSize:i]
+            res = self.readItems(tickerBatch)
+
+            time.sleep(delay)
+
+        
 import yfinance as yf
-from utils.scripts import graphDriverFunction as getGraphs, statDriverFunction as getStats
+from utils.scripts import graphDriverFunction as getGraphs, statWrapperFunction as getStats
 
 class GraphCache(TemplateTTLCache):
     def __init__(self, ttlInterval, sweepInterval):
         super().__init__(ttlInterval, sweepInterval)
 
 
-    def loadData(self, misses) -> dict:
+    def loadData(self, misses: list[str]) -> dict:
         """
-        Fetches price histories via block call, then computes graph values with multiprocessing
+        Fetches price histories via block call, then computes graph values with vectorized ops
         """
+
         data = yf.download(misses, period='10y', interval='1d', timeout=10)
-        res = getGraphs(data)
-        return res
+        res = dict(getGraphs(data))
+
+        print(res)
+
+        # originally, data is keyed by graph type
+        # we want it to be keyed by ticker name
+        reformattedRes = {miss: {} for miss in misses}
+        for graph, val in res.items():
+            for ticker, stats in val.items():
+
+                # remaps data without overwriting        
+                reformattedRes[ticker][graph] = stats
+
+        print(reformattedRes)
+
+        return reformattedRes
+
         
 
 class StatsCache(TemplateTTLCache):
@@ -147,14 +188,9 @@ class StatsCache(TemplateTTLCache):
         super().__init__(ttlInterval, sweepInterval)
 
 
-    def loadData(self, misses) -> dict:
+    def loadData(self, misses: list[str]) -> dict:
         """
         Fetches stock stats from yfin efficiently with asyncio
         """
         
-        data = getStats()
-        
-        
-        pass
-        return {}
-
+        return getStats(misses)

@@ -40,15 +40,6 @@ app.get("/api/ping", async (req, res) => {
 
 app.get("/api/data", async (req, res) => {
 
-    // validates request
-    if (!validReq(req.query)) {
-        return res.status(400).json({
-            'success': false,
-            'err': '1 or more required parameters missing',
-            'requiredParams': ['tickers', 'interval', 'period']
-        });
-    }
-
     // parses vars from query args ({validReq is true} ==> {all args present})
     const query = new URLSearchParams(req.query);
     
