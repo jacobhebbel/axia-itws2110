@@ -23,11 +23,11 @@ class TemplateTTLCache:
         self.sweepInterval = sweepInSeconds
 
         self.lock = threading.Lock()
-        self._sweepThread = threading.Thread(target=self.sweep(), daemon=True)
+        self._sweepThread = threading.Thread(target=self.sweepLoop, daemon=True)
         self._sweepThread.start()
 
 
-    def merge(self, d1: dict, d2: dict):
+    def _merge(self, d1: dict, d2: dict):
         """
         Helper function for combining dictionaries
         """
@@ -57,9 +57,7 @@ class TemplateTTLCache:
             # reset the timer on cache hit
             NOW = datetime.datetime.now()
             self.data[key]['expiry'] = NOW + self.TTL
-            
-            entry = self.data.get(key, None)
-            return entry['data'] if entry is not None else None
+            return self.data[key]['data']
         else:
             return None
 
@@ -71,20 +69,19 @@ class TemplateTTLCache:
         """
         
         # fetch and insert misses, return hits
-        hits, misses = set(self.cached()) ^ set(items), set(items) - set(self.cached())
+
+        hits, misses = set(self.cached()) & set(items), set(items) - set(self.cached())
         
         # loads the data using a custom method
-        data = self.loadData(list(misses))
-        print(data)
+        missingData = None if misses == set() else self.loadData(list(misses)) 
 
         # assuming items 1-to-1 corresponds with misses
-        # this adds all of the misses into the cache
-        for key, item in data.items():
-            self.add(key, item)
+        if missingData is not None:
+            for key, item in missingData.items():
+                self.add(key, item)
 
         # return the union of the hit results and the miss results
-        res = self.merge({hit: self.query(hit) for hit in hits}, data)
-        print(res)
+        res = {hit: self.query(hit) for hit in hits} if missingData is None else self._merge({hit: self.query(hit) for hit in hits}, missingData)
         return res
 
 
@@ -166,8 +163,6 @@ class GraphCache(TemplateTTLCache):
         data = yf.download(misses, period='10y', interval='1d', timeout=10)
         res = dict(getGraphs(data))
 
-        print(res)
-
         # originally, data is keyed by graph type
         # we want it to be keyed by ticker name
         reformattedRes = {miss: {} for miss in misses}
@@ -176,9 +171,7 @@ class GraphCache(TemplateTTLCache):
 
                 # remaps data without overwriting        
                 reformattedRes[ticker][graph] = stats
-
-        print(reformattedRes)
-
+                
         return reformattedRes
 
         

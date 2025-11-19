@@ -97,36 +97,44 @@ async def statDriverFunction(tickers: list) -> dict:
     Constructs the stat dictionary
     """
 
+    # plan
+
+    # 1. get a prices dict of ticker to price
+    # 2. get ticker dict from yfin
+    # 3. put both into computeStockMetrics
+
     # bulk download price data for eps calcs
-    prices = yf.download(tickers, period="1d", interval="1d", group_by="ticker", timeout=10)
-    if len(tickers) == 1:
-        prices = pd.DataFrame({tickers[0]: prices["Close"]})
+    prices = yf.download(tickers, period="1d", interval="1d", group_by='Ticker', timeout=10)
+    closePrices = {}
+    
+    # handle special download case for 1 ticker
+    # need to reformat df here to be consistent
     
     # collect closes for eps calcs
-    recent_closes = {}
+
     for ticker in tickers:
         try:
-            recent_closes[ticker] = prices[ticker]["Close"].iloc[-1]
-        except Exception:
-            recent_closes[ticker] = None
+            closePrices[ticker] = prices[ticker]['Close'].iloc[0]
+        except Exception as e:
+            print('exception raised when accessing recent closes')
+            closePrices[ticker] = None
 
     # opens n threads, each making a request to yfin for stock n 
     data = await fetchAllTickers(tickers)
-
+    
     # collect stats into dict
     results = {}
     for ticker, info in zip(tickers, data):
-        if isinstance(info, Exception) or recent_closes[ticker] is None:
+        if isinstance(info, Exception) or closePrices[ticker] is None:
             results[ticker] = {"error": str(info) if isinstance(info, Exception) else "No price data"}
         else:
-            results[ticker] = computeStockMetrics(ticker, info, recent_closes[ticker])
+            results[ticker] = computeStockMetrics(ticker, info, closePrices[ticker])
 
     return results
 
 
 def statWrapperFunction(tickers: list[str]) -> dict:
-    res =  asyncio.run(statDriverFunction(tickers))
-    return res
+    return asyncio.run(statDriverFunction(tickers))
 
 def getSp500Tickers():
 

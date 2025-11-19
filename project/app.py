@@ -60,7 +60,6 @@ def yfinanceCall():
         graphs = gCache.readItems(tickers)
 
         stats = merge(merge(stats, {'marketAverages': CURRENT_MARKET}), {'marketPredictions': EXPECTED_MARKET})
-        print(stats)
 
         return {
             'stats': stats,
@@ -78,16 +77,16 @@ if __name__ == "__main__":
     from utils.cache import GraphCache, StatsCache
     from utils.scripts import fetchMarketData, getSp500Tickers
 
-    # sp500 = [t for t in getSp500Tickers() if isValidTicker(t)]
+    sp500 = [t for t in getSp500Tickers()][:100]
+    test = ['AAPL', 'MSFT', 'AMZN', 'GOOG', 'META', 'TSLA', 'NVDA', 'JPM', 'BAC', 'WMT', 
+            'DIS', 'KO', 'PFE', 'MRK', 'INTC', 'ORCL', 'CSCO', 'XOM', 'CVX', 'NKE']
     TTL, SWEEP = 999, 999
     gCache, sCache = GraphCache(TTL, SWEEP), StatsCache(TTL, SWEEP)
     
     # warm up caches
-    # sCache.warmup(sp500, batchSize=10, delay=10.0)
-    # gCache.warmup(sp500, batchSize=10, delay=10.0)
+    sCache.warmup(sp500, batchSize=25, delay=2.0)
+    gCache.warmup(sp500, batchSize=8, delay=1.0)
     
     # constants that dont rlly change in short term
     CURRENT_MARKET, EXPECTED_MARKET = fetchMarketData()
-    print(CURRENT_MARKET)
-    print(EXPECTED_MARKET)
     app.run(port=4000)
