@@ -1,6 +1,6 @@
 const PROTOCOL = 'http://';
-const SERVER = 'localhost:3000';
-const ENDPOINT = 'api/data';
+const SERVER = '3.21.35.21:3000';
+const ENDPOINT = '/api/data';
 
 async function callServer(tickers) {
 
@@ -10,7 +10,7 @@ async function callServer(tickers) {
     });
 
     // constructs a request and sends to server
-    const url = `${PROTOCOL}${SERVER}/${ENDPOINT}?${query}`;
+    const url = `${ENDPOINT}?${query}`;
     const response = await fetch(url);
 
     // switch on HTTP status code 

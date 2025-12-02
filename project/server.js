@@ -2,11 +2,14 @@
 const express = require("express");
 const axios = require("axios");
 const path = require("path");
+const cors = require("cors");
+app.use(cors());
 
 const app = express();
 const PORT_ME = 3000;
 const PORT_FLASK = 4000;
-const URL_FLASK = `http://localhost:${PORT_FLASK}`;
+const URL_FLASK = `http://127.0.0.1:${PORT_FLASK}`;
+
 
 // checks if all required args are present in request query parameters
 function validReq(queryArgs) {
