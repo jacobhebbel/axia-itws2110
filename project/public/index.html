@@ -13,64 +13,70 @@
         <img src="images/name.png" alt="Axia - Smart Finance, Simple Solutions" class="title-img">
     </header>
 
-    <div class="ticker-container">
-        <div class="ticker" id="live-ticker">
-            <!-- all of the ticker tape stuff is poplated by javascript-- need to find more efficient alternative here or get rid of it -->
-        </div>
-    </div>
-
-    <!-- for the data table with the P/E, volitility, yield, EPS, and price range-->
     <div class="dashboard">
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title">Stock Metrics Comparison</h2>
-                <div class="stock-selector">
-                    <select class="stock-select" id="stock-select">
-                        <option value="AAPL">Apple (AAPL)</option>
-                        <option value="MSFT">Microsoft (MSFT)</option>
-                        <option value="GOOGL">Alphabet (GOOGL)</option>
-                        <option value="AMZN">Amazon (AMZN)</option>
-                        <option value="TSLA">Tesla (TSLA)</option>
-                        <option value="AVGO">Broadcom (AVGO)</option>
-                    </select>
+                <h2 class="card-title">Financial Dashboard</h2>
+                <div class="stock-controls">
+                    <div class="chart-type-selector">
+                        <select class="chart-type-select" id="chart-type-1">
+                            <option value="data-table">Data Table</option>
+                            <option value="efficient-frontier">Efficient Frontier</option>
+                            <option value="risk-bar">Total Risk Contribution</option>
+                            <option value="mctr-pie">MCTR Pie Chart</option>
+                        </select>
+                    </div>
+                    <div class="ticker-search-container">
+                        <input type="text" class="ticker-search" id="ticker-search-1" placeholder="Enter ticker (e.g., NVDA)">
+                        <button class="search-button" id="search-button-1">Add</button>
+                    </div>
+                    <div class="stock-selector" id="stock-selector-1">
+                        <select class="stock-select" id="stock-select-1">
+                            <option value="AAPL">Apple (AAPL)</option>
+                            <option value="MSFT">Microsoft (MSFT)</option>
+                            <option value="GOOGL">Alphabet (GOOGL)</option>
+                            <option value="AMZN">Amazon (AMZN)</option>
+                            <option value="TSLA">Tesla (TSLA)</option>
+                            <option value="AVGO">Broadcom (AVGO)</option>
+                        </select>
+                    </div>
+                    <div class="cap-selector hidden" id="cap-selector-1">
+                        <select class="cap-select" id="cap-select-1">
+                            <option value="large_cap">Large Cap</option>
+                            <option value="mid_cap">Mid Cap</option>
+                            <option value="small_cap">Small Cap</option>
+                        </select>
+                    </div>
                 </div>
             </div>
-            <div class="loader" id="metrics-loader"></div>
-            <table class="stats-table" id="metrics-table">
-                <thead>
-                    <tr>
-                        <th>Metric</th>
-                        <th>Current</th>
-                        <th>Market Average</th>
-                        <th>Market Expectation</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- data here is pulled from javascript below to populate with market data -->
-                </tbody>
-            </table>
-            <div class="status-indicator" id="data-status">
-                <span class="status-dot status-live"></span>
-                <span>Live Market Data</span>
+            
+            <div class="chart-container" id="data-table-1">
+                <div class="loader" id="metrics-loader-1"></div>
+                <table class="stats-table" id="metrics-table-1">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Current</th>
+                            <th>Market Average</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
             </div>
-        </div>
-
-        <!-- everything here is for the efficient frontier graph that clark wanted us to add -->
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title">CRSP Efficient Frontier</h2>
-                <div class="stock-selector">
-                    <select class="stock-select" id="frontier-select">
-                        <option value="large_cap">Large Cap Stocks</option>
-                        <option value="mid_cap">Mid Cap Stocks</option>
-                        <option value="small_cap">Small Cap Stocks</option>
-                    </select>
-                </div>
+            
+            <div class="chart-container hidden" id="efficient-frontier-1">
+                <canvas id="frontier-chart-1"></canvas>
             </div>
-            <div class="chart-container">
-                <canvas id="frontier-chart"></canvas>
+            
+            <div class="chart-container hidden" id="risk-bar-1">
+                <canvas id="risk-bar-chart-1"></canvas>
             </div>
-            <div class="frontier-legend">
+            
+            <div class="chart-container hidden" id="mctr-pie-1">
+                <canvas id="mctr-pie-chart-1"></canvas>
+            </div>
+            
+            <div class="frontier-legend hidden" id="frontier-legend-1">
                 <div class="legend-item">
                     <div class="legend-color" style="background-color: #edd39a;"></div>
                     <span>Efficient Frontier</span>
@@ -91,6 +97,102 @@
                     <div class="line-legend" style="background-color: #2196F3;"></div>
                     <span>Equal Weight Portfolio</span>
                 </div>
+            </div>
+            
+            <div class="status-indicator">
+                <span class="status-dot status-live"></span>
+                <span>Live Market Data</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Financial Dashboard</h2>
+                <div class="stock-controls">
+                    <div class="chart-type-selector">
+                        <select class="chart-type-select" id="chart-type-2">
+                            <option value="data-table">Data Table</option>
+                            <option value="efficient-frontier">Efficient Frontier</option>
+                            <option value="risk-bar">Total Risk Contribution</option>
+                            <option value="mctr-pie">MCTR Pie Chart</option>
+                        </select>
+                    </div>
+                    <div class="ticker-search-container">
+                        <input type="text" class="ticker-search" id="ticker-search-2" placeholder="Enter ticker (e.g., NVDA)">
+                        <button class="search-button" id="search-button-2">Add</button>
+                    </div>
+                    <div class="stock-selector" id="stock-selector-2">
+                        <select class="stock-select" id="stock-select-2">
+                            <option value="AAPL">Apple (AAPL)</option>
+                            <option value="MSFT">Microsoft (MSFT)</option>
+                            <option value="GOOGL">Alphabet (GOOGL)</option>
+                            <option value="AMZN">Amazon (AMZN)</option>
+                            <option value="TSLA">Tesla (TSLA)</option>
+                            <option value="AVGO">Broadcom (AVGO)</option>
+                        </select>
+                    </div>
+                    <div class="cap-selector hidden" id="cap-selector-2">
+                        <select class="cap-select" id="cap-select-2">
+                            <option value="large_cap">Large Cap</option>
+                            <option value="mid_cap">Mid Cap</option>
+                            <option value="small_cap">Small Cap</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chart-container" id="data-table-2">
+                <div class="loader" id="metrics-loader-2"></div>
+                <table class="stats-table" id="metrics-table-2">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Current</th>
+                            <th>Market Average</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            
+            <div class="chart-container hidden" id="efficient-frontier-2">
+                <canvas id="frontier-chart-2"></canvas>
+            </div>
+            
+            <div class="chart-container hidden" id="risk-bar-2">
+                <canvas id="risk-bar-chart-2"></canvas>
+            </div>
+            
+            <div class="chart-container hidden" id="mctr-pie-2">
+                <canvas id="mctr-pie-chart-2"></canvas>
+            </div>
+            
+            <div class="frontier-legend hidden" id="frontier-legend-2">
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #edd39a;"></div>
+                    <span>Efficient Frontier</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #4caf50;"></div>
+                    <span>Optimal Portfolio</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #f44336;"></div>
+                    <span>Individual Assets</span>
+                </div>
+                <div class="legend-item">
+                    <div class="line-legend" style="background-color: #9C27B0;"></div>
+                    <span>Capital Market Line</span>
+                </div>
+                <div class="legend-item">
+                    <div class="line-legend" style="background-color: #2196F3;"></div>
+                    <span>Equal Weight Portfolio</span>
+                </div>
+            </div>
+            
+            <div class="status-indicator">
+                <span class="status-dot status-live"></span>
+                <span>Live Market Data</span>
             </div>
         </div>
     </div>
