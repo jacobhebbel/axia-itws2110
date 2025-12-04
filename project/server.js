@@ -3,7 +3,6 @@ const express = require("express");
 const axios = require("axios");
 const path = require("path");
 const cors = require("cors");
-app.use(cors());
 
 const app = express();
 const PORT_ME = 3000;
@@ -20,6 +19,7 @@ function validReq(queryArgs) {
 
 // serve the code structure in /public
 app.use(express.static(path.join(__dirname, "public")));
+// app.use(cors); <== we do this a lot
 
 app.get("/api/ping", async (req, res) => {
 
