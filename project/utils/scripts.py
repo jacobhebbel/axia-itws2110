@@ -20,8 +20,8 @@ def marginalContributionToRisk(data: pd.DataFrame) -> dict:
 
 
 # CPU task (will be vectorized)
-def systemicRisk():
-    pass
+def systemicRisk(data: pd.DataFrame, ticker: str, market: str = "SPY") -> float:
+    return computeRisk(data, ticker, market)
 
 
 # Network task (use threading)
