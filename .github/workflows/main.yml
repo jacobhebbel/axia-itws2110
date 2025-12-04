@@ -1,0 +1,49 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+
+    - name: Install SSH key
+      uses: webfactory/ssh-agent@v0.7.0
+      with:
+        ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+    - name: Add host to known_hosts
+      run: |
+        ssh-keyscan ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Deploy to EC2
+      run: |
+        ssh ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+        
+        cd /var/www/html/axia-itws2110
+
+        echo "🔄 Pulling latest GitHub changes..."
+        git fetch --all
+        git reset --hard origin/main
+
+        echo "📦 Installing Node dependencies..."
+        cd /var/www/html/axia-itws2110/project
+        npm install
+
+        echo "🐍 Activating Python venv..."
+        source venv/bin/activate
+
+        echo "📦 Installing Python dependencies..."
+        pip install -r requirements.txt || true
+
+        echo "🚀 Restarting PM2 apps..."
+        pm2 restart axia-server
+        pm2 restart flask
+
+        echo "✅ Deployment complete!"
+        EOF
