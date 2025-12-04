@@ -1,4 +1,4 @@
-name: deploy
+name: Deploy to EC2
 
 on:
   push:
@@ -9,60 +9,41 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # ------------------------------
-    # Checkout GitHub Repo
-    # ------------------------------
     - name: Checkout repo
       uses: actions/checkout@v3
 
-    # ------------------------------
-    # Install SSH Key for EC2
-    # ------------------------------
     - name: Install SSH key
-      uses: webfactory/ssh-agent@v0.8.0
+      uses: webfactory/ssh-agent@v0.7.0
       with:
         ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-    # ------------------------------
-    # Add EC2 host to known_hosts
-    # ------------------------------
     - name: Add host to known_hosts
       run: |
-        mkdir -p ~/.ssh
-        ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+        ssh-keyscan ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-    # ------------------------------
-    # Test SSH Connection
-    # ------------------------------
-    - name: Test SSH connection
-      run: |
-        ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} "echo 'Connected to EC2!'"
-
-    # ------------------------------
-    # Deploy Code + Restart PM2 Processes
-    # ------------------------------
     - name: Deploy to EC2
       run: |
         ssh ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
-          set -e
+        
+        cd /var/www/html/axia-itws2110
 
-          cd ${{ secrets.EC2_PATH }}
+        echo "🔄 Pulling latest GitHub changes..."
+        git fetch --all
+        git reset --hard origin/main
 
-          echo "Pulling latest code..."
-          git pull origin main
+        echo "📦 Installing Node dependencies..."
+        cd /var/www/html/axia-itws2110/project
+        npm install
 
-          echo "Installing Node dependencies..."
-          cd server
-          npm install
+        echo "🐍 Activating Python venv..."
+        source venv/bin/activate
 
-          echo "Installing Python dependencies..."
-          cd ../flask
-          pip install -r requirements.txt
+        echo "📦 Installing Python dependencies..."
+        pip install -r requirements.txt || true
 
-          echo "Restarting PM2 processes..."
-          pm2 restart axia-server || pm2 start server.js --name axia-server
-          pm2 restart flask || pm2 start app.py --name flask
+        echo "🚀 Restarting PM2 apps..."
+        pm2 restart axia-server
+        pm2 restart flask
 
-          pm2 save
-          echo "Deployment complete!"
+        echo "✅ Deployment complete!"
         EOF
